@@ -7,3 +7,4 @@ load
 break vApplicationMallocFailedHook
 break vApplicationStackOverflowHook
 break vAssertCalled
+break assert_failed

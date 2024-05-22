@@ -9,15 +9,17 @@
 #include "stm32f4xx_hal_conf.h"
 
 static void led_heartbeat_timer_cb(TimerHandle_t timer);
+static void hw_init(void);
+static void configure_system_clock(void);
 
 int main(void)
 {
     traceResult tr;
 
-    /* NOTE: startup_stm32f429xx.s calls SystemInit() before main */
-    HAL_NVIC_SetPriorityGrouping(NVIC_PRIORITYGROUP_4);
+    hw_init();
 
-    // TODO - crank up the clocks
+    // Configure the system clock to 180 MHz
+    configure_system_clock();
 
     led_init();
     led_on(LED_GREEN);
@@ -60,11 +62,75 @@ static void led_heartbeat_timer_cb(TimerHandle_t timer)
     led_toggle(LED_GREEN);
 }
 
-/* TODO: timer/etc for this, timeouts will never get hit currently */
+static void hw_init(void)
+{
+    // Configure Flash prefetch, Instruction cache, Data cache
+#if (INSTRUCTION_CACHE_ENABLE != 0U)
+    __HAL_FLASH_INSTRUCTION_CACHE_ENABLE();
+#endif /* INSTRUCTION_CACHE_ENABLE */
+
+#if (DATA_CACHE_ENABLE != 0U)
+    __HAL_FLASH_DATA_CACHE_ENABLE();
+#endif /* DATA_CACHE_ENABLE */
+
+#if (PREFETCH_ENABLE != 0U)
+    __HAL_FLASH_PREFETCH_BUFFER_ENABLE();
+#endif /* PREFETCH_ENABLE */
+
+    // NOTE: startup_stm32f429xx.s calls SystemInit() before main
+    HAL_NVIC_SetPriorityGrouping(NVIC_PRIORITYGROUP_4);
+}
+
+static void configure_system_clock(void)
+{
+    HAL_StatusTypeDef ret;
+    RCC_ClkInitTypeDef clk_init;
+    RCC_OscInitTypeDef osc_init;
+
+    // Enable Power Control clock
+    __HAL_RCC_PWR_CLK_ENABLE();
+
+    /* The voltage scaling allows optimizing the power consumption when the device is
+       clocked below the maximum system frequency, to update the voltage scaling value
+       regarding system frequency refer to product datasheet.  */
+    __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
+
+    // Enable HSE Oscillator and activate PLL with HSE as source
+    osc_init.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+    osc_init.HSEState = RCC_HSE_BYPASS;
+    osc_init.PLL.PLLState = RCC_PLL_ON;
+    osc_init.PLL.PLLSource = RCC_PLLSOURCE_HSE;
+    osc_init.PLL.PLLM = 8;
+    osc_init.PLL.PLLN = 360;
+    osc_init.PLL.PLLP = RCC_PLLP_DIV2;
+    osc_init.PLL.PLLQ = 7;
+    ret = HAL_RCC_OscConfig(&osc_init);
+    configASSERT(ret == HAL_OK);
+
+    ret = HAL_PWREx_EnableOverDrive();
+    configASSERT(ret == HAL_OK);
+
+    /* Select PLL as system clock source and configure the HCLK, PCLK1 and PCLK2
+       clocks dividers */
+    clk_init.ClockType = (RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2);
+    clk_init.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
+    clk_init.AHBCLKDivider = RCC_SYSCLK_DIV1;
+    clk_init.APB1CLKDivider = RCC_HCLK_DIV4;
+    clk_init.APB2CLKDivider = RCC_HCLK_DIV2;
+    ret = HAL_RCC_ClockConfig(&clk_init, FLASH_LATENCY_5);
+    configASSERT(ret == HAL_OK);
+}
+
+// TODO: timer/etc for this, timeouts will never get hit currently
 // Should be able to rm it once on the LL APIs
-/*
+uint32_t uwTickPrio = (1UL << __NVIC_PRIO_BITS); /* Invalid PRIO */
 uint32_t HAL_GetTick(void)
 {
     return 0;
 }
-*/
+HAL_StatusTypeDef HAL_InitTick(uint32_t TickPriority)
+{
+    uwTickPrio = TickPriority;
+    return HAL_OK;
+}
+
