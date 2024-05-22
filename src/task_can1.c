@@ -14,9 +14,9 @@
 
 #define CAN1_GPIO_PORT GPIOD
 #define CAN1_RX_PIN GPIO_PIN_0
-#define CAN1_RT_PIN GPIO_PIN_1
+#define CAN1_TX_PIN GPIO_PIN_1
 
-#define RX_MSGBUF_SIZE (sizeof(can_frame_s) * 32)
+#define RX_MSGBUF_SIZE (sizeof(can_rx_frame_s) * 32)
 
 static void init_can1(void);
 static void can1_task(void* params);
@@ -51,7 +51,7 @@ static void init_can1(void)
     CAN_FilterTypeDef filter_cfg;
     GPIO_InitTypeDef gpio_init =
     {
-        .Pin = (GPIO_PIN_0 | GPIO_PIN_1),
+        .Pin = (CAN1_RX_PIN | CAN1_TX_PIN),
         .Mode = GPIO_MODE_AF_PP,
         .Pull = GPIO_PULLUP,
         .Speed = GPIO_SPEED_FREQ_VERY_HIGH,
@@ -114,7 +114,7 @@ static void init_can1(void)
 
 static void can1_task(void* params)
 {
-    can_frame_s rx_frame;
+    can_rx_frame_s rx_frame;
     (void) params;
 
     while(1)
@@ -131,7 +131,7 @@ static void can1_pending_cb(CAN_HandleTypeDef *hcan)
     HAL_StatusTypeDef ret;
     size_t bytes_sent;
     BaseType_t higher_prio_task_woken;
-    static can_frame_s rx_frame;
+    static can_rx_frame_s rx_frame;
 
     led_toggle(LED_BLUE);
 

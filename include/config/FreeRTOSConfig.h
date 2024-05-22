@@ -115,6 +115,8 @@ void vAssertCalled(const char* file, int line);
 
 #define configCOMMAND_INT_MAX_OUTPUT_SIZE 3500
 
+#define STATIC_SIZE(t, s) typedef char t##_size_check_struct[1-2*!!(sizeof(t)!=(s))]
+
 #include "trcRecorder.h"
 
 #endif /* FREERTOS_CONFIG_H */

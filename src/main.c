@@ -6,6 +6,7 @@
 #include "logging.h"
 #include "task_shell.h"
 #include "task_can1.h"
+#include "task_can2.h"
 
 #include "stm32f4xx_hal_conf.h"
 
@@ -37,6 +38,7 @@ int main(void)
 
     task_shell_start();
     task_can1_start();
+    task_can2_start();
 
     configASSERT(xTraceDiagnosticsCheckStatus() == TRC_SUCCESS);
     const char* err = NULL;
