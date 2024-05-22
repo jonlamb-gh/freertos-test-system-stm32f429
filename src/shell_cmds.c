@@ -1,3 +1,6 @@
+// More examples:
+// https://github.com/FreeRTOS/FreeRTOS/blob/main/FreeRTOS-Plus/Demo/Common/FreeRTOS_Plus_CLI_Demos/Sample-CLI-commands.c
+
 #include "FreeRTOS.h"
 #include "FreeRTOS_CLI.h"
 

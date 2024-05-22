@@ -5,6 +5,7 @@
 #include "led.h"
 #include "logging.h"
 #include "task_shell.h"
+#include "task_can1.h"
 
 #include "stm32f4xx_hal_conf.h"
 
@@ -35,6 +36,7 @@ int main(void)
     xTimerStart(timer, 0);
 
     task_shell_start();
+    task_can1_start();
 
     configASSERT(xTraceDiagnosticsCheckStatus() == TRC_SUCCESS);
     const char* err = NULL;
@@ -81,6 +83,24 @@ static void hw_init(void)
     HAL_NVIC_SetPriorityGrouping(NVIC_PRIORITYGROUP_4);
 }
 
+/*
+ * The system Clock is configured as follow : 
+ *            System Clock source            = PLL (HSE)
+ *            SYSCLK(Hz)                     = 180000000
+ *            HCLK(Hz)                       = 180000000
+ *            AHB Prescaler                  = 1
+ *            APB1 Prescaler                 = 4
+ *            APB2 Prescaler                 = 2
+ *            HSE Frequency(Hz)              = 8000000
+ *            PLL_M                          = 8
+ *            PLL_N                          = 360
+ *            PLL_P                          = 2
+ *            PLL_Q                          = 7
+ *            PLL_R                          = 2
+ *            VDD(V)                         = 3.3
+ *            Main regulator output voltage  = Scale1 mode
+ *            Flash Latency(WS)              = 5
+ */
 static void configure_system_clock(void)
 {
     HAL_StatusTypeDef ret;
