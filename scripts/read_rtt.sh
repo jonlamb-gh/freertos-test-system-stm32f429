@@ -1,0 +1,10 @@
+#!/bin/bash
+# https://github.com/jonlamb-gh/rtt-reader
+
+set -euo pipefail
+
+export RUST_LOG=rtt_reader=trace,warn
+
+rtt-reader --chip STM32F429ZITx --reset --up-channel 1 --elf-file build/firmware --output /tmp/rtt.bin
+
+exit 0
