@@ -12,6 +12,7 @@
 
 #define TASK_PRIO (tskIDLE_PRIORITY + 2)
 #define TASK_STACK_SIZE (2 * configMINIMAL_STACK_SIZE)
+#define ISR_PRIO configLIBRARY_LOWEST_INTERRUPT_PRIORITY
 
 #define CAN1_GPIO_PORT GPIOD
 #define CAN1_RX_PIN GPIO_PIN_0
@@ -26,10 +27,15 @@ static void can1_error_cb(CAN_HandleTypeDef *hcan);
 
 static MessageBufferHandle_t g_rx_msgbuf = NULL;
 static CAN_HandleTypeDef g_can = {0};
+static TraceISRHandle_t g_isr_handle = NULL;
 
 void task_can1_start(void)
 {
     BaseType_t ret;
+    traceResult tr;
+
+    tr = xTraceISRRegister("CAN1_RX0", ISR_PRIO, &g_isr_handle);
+    configASSERT(tr == TRC_SUCCESS);
 
     init_can1();
 
@@ -62,7 +68,7 @@ static void init_can1(void)
     __HAL_RCC_GPIOD_CLK_ENABLE();
     HAL_GPIO_Init(CAN1_GPIO_PORT, &gpio_init);
 
-    NVIC_SetPriority(CAN1_RX0_IRQn, configLIBRARY_LOWEST_INTERRUPT_PRIORITY);
+    NVIC_SetPriority(CAN1_RX0_IRQn, ISR_PRIO);
     NVIC_EnableIRQ(CAN1_RX0_IRQn);
 
     // 500K
@@ -166,5 +172,13 @@ static void can1_error_cb(CAN_HandleTypeDef *hcan)
 
 void CAN1_RX0_IRQHandler(void)
 {
+    traceResult tr;
+
+    tr = xTraceISRBegin(g_isr_handle);
+    configASSERT(tr == TRC_SUCCESS);
+
     HAL_CAN_IRQHandler(&g_can);
+
+    tr = xTraceISREnd(0);
+    configASSERT(tr == TRC_SUCCESS);
 }

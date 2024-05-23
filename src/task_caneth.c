@@ -89,6 +89,7 @@ static void caneth_task(void* params)
     uint32_t notif_bits;
     BaseType_t ret;
     uint8_t* udp_buffer;
+    uint16_t udp_seqnum = 0;
     uint8_t buffered_frames = 0;
     Socket_t socket = FREERTOS_INVALID_SOCKET;
     struct freertos_sockaddr addr = {0};
@@ -150,9 +151,12 @@ static void caneth_task(void* params)
         const int ready_to_send = (buffered_frames == CANETH_MAX_COUNT) || ((notif_bits & FLUSH_EVENT_BIT) != 0);
         if((ready_to_send != 0) && (buffered_frames != 0))
         {
+            udp_seqnum += 1;
+
             caneth_header_s *const header = (caneth_header_s*) udp_buffer;
             header->magic_id = CANETH_MAGIC_ID;
             header->version = CANETH_VERSION;
+            header->seqnum = udp_seqnum;
             header->count = buffered_frames;
 
             const size_t udp_size = sizeof(caneth_header_s) + (sizeof(caneth_frame_s) * buffered_frames);

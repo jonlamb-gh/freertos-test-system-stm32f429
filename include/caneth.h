@@ -23,9 +23,10 @@ typedef struct
 {
     uint64_t magic_id; /* Always CANETH_MAGIC_ID */
     uint8_t version; /* Set to CANETH_VERSION */
+    uint16_t seqnum; /* Datagram sequence number */
     uint8_t count; /* Number of CAN frames in the UDP message (1-16) */
 } __attribute__((packed)) caneth_header_s;
-STATIC_SIZE(caneth_header_s, 10);
+STATIC_SIZE(caneth_header_s, 12);
 
 typedef struct
 {
