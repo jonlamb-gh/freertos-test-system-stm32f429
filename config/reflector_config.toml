@@ -1,0 +1,26 @@
+[plugins]
+plugins-dir = '/opt/modality/modality-reflector-plugins'
+
+[ingest]
+additional-timeline-attributes = [
+    "ci_job='${GITHUB_JOB-local}'",
+    "ci_commit='${GIT_SHA-local}'",
+    "ci_run_id='${GITHUB_RUN_NUMBER-local}'",
+]
+
+[plugins.ingest.importers.trace-recorder.metadata]
+startup-task-name = 'init'
+user-event-channel = true
+interaction-mode = 'ipc'
+
+[plugins.ingest.collectors.trace-recorder-rtt.metadata]
+startup-task-name = 'init'
+user-event-channel = true
+interaction-mode = 'ipc'
+attach-timeout = "10s"
+chip = 'STM32F429ZITx'
+reset = true
+elf-file = 'build/firmware'
+thumb = true
+breakpoint = 'main'
+metrics = true
