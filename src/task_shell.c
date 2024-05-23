@@ -53,6 +53,7 @@ void task_shell_start(void)
 
     g_rx_msgbuf = xMessageBufferCreate(RX_MSGBUF_SIZE);
     configASSERT(g_rx_msgbuf != NULL);
+    vTraceSetMessageBufferName(g_rx_msgbuf, "shell_uart_msg_buf");
 
     ret = xTaskCreate(
             shell_task,

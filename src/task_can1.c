@@ -41,6 +41,7 @@ void task_can1_start(void)
 
     g_rx_msgbuf = xMessageBufferCreate(RX_MSGBUF_SIZE);
     configASSERT(g_rx_msgbuf != NULL);
+    vTraceSetMessageBufferName(g_rx_msgbuf, "can1_rx_msg_buf");
 
     ret = xTaskCreate(
             can1_task,
