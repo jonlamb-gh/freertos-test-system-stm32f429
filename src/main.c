@@ -4,6 +4,7 @@
 
 #include "led.h"
 #include "logging.h"
+#include "ip.h"
 #include "task_shell.h"
 #include "task_can1.h"
 #include "task_can2.h"
@@ -14,19 +15,22 @@ static void led_heartbeat_timer_cb(TimerHandle_t timer);
 static void hw_init(void);
 static void configure_system_clock(void);
 
+static StaticTask_t g_idle_task_tcb;
+static StackType_t g_idle_task_stack[configMINIMAL_STACK_SIZE];
+static StaticTask_t g_timer_task_tcb;
+static StackType_t g_timer_task_stack[configTIMER_TASK_STACK_DEPTH];
+
 int main(void)
 {
     traceResult tr;
 
     hw_init();
 
-    // Configure the system clock to 180 MHz
     configure_system_clock();
 
     led_init();
     led_on(LED_GREEN);
 
-    // TODO - just initialize, start from shell
     tr = xTraceEnable(TRC_START);
     configASSERT(tr == TRC_SUCCESS);
 
@@ -37,6 +41,7 @@ int main(void)
     xTimerStart(timer, 0);
 
     task_shell_start();
+    ip_init();
     task_can1_start();
     task_can2_start();
 
@@ -66,6 +71,26 @@ static void led_heartbeat_timer_cb(TimerHandle_t timer)
     led_toggle(LED_GREEN);
 }
 
+void vApplicationGetIdleTaskMemory(
+        StaticTask_t **ppxIdleTaskTCBBuffer,
+        StackType_t **ppxIdleTaskStackBuffer,
+        configSTACK_DEPTH_TYPE *pulIdleTaskStackSize)
+{
+    *ppxIdleTaskTCBBuffer = &g_idle_task_tcb;
+    *ppxIdleTaskStackBuffer = &g_idle_task_stack[0];
+    *pulIdleTaskStackSize = configMINIMAL_STACK_SIZE;
+}
+
+void vApplicationGetTimerTaskMemory(
+        StaticTask_t **ppxTimerTaskTCBBuffer,
+        StackType_t **ppxTimerTaskStackBuffer,
+        configSTACK_DEPTH_TYPE *puxTimerTaskStackSize)
+{
+    *ppxTimerTaskTCBBuffer = &g_timer_task_tcb;
+    *ppxTimerTaskStackBuffer = &g_timer_task_stack[0];
+    *puxTimerTaskStackSize = configTIMER_TASK_STACK_DEPTH;
+}
+
 static void hw_init(void)
 {
     // Configure Flash prefetch, Instruction cache, Data cache
@@ -86,7 +111,7 @@ static void hw_init(void)
 }
 
 /*
- * The system Clock is configured as follow : 
+ * The system Clock is configured as follow :
  *            System Clock source            = PLL (HSE)
  *            SYSCLK(Hz)                     = 180000000
  *            HCLK(Hz)                       = 180000000

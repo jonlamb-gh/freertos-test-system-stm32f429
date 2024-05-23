@@ -9,7 +9,13 @@ message(STATUS "Fetching dependencies")
 FetchContent_Declare(
     freertos
     GIT_REPOSITORY "https://github.com/FreeRTOS/FreeRTOS-Kernel.git"
-    GIT_TAG "V10.5.0"
+    GIT_TAG "V11.1.0"
+)
+
+FetchContent_Declare(
+    freertostcp
+    GIT_REPOSITORY "https://github.com/FreeRTOS/FreeRTOS-Plus-TCP.git"
+    GIT_TAG "V4.1.0"
 )
 
 FetchContent_Declare(
@@ -28,6 +34,7 @@ FetchContent_Declare(
 # we're defining build rules locally and don't want cmake to automatically
 # call add_subdirectory on these
 FetchContent_Populate(freertos)
+FetchContent_Populate(freertostcp)
 FetchContent_Populate(tracerecorder)
 FetchContent_Populate(stm32cubef4)
 
@@ -45,6 +52,50 @@ set(
     KERNEL_INCLUDES
     ${freertos_SOURCE_DIR}/include
     ${freertos_SOURCE_DIR}/portable/GCC/ARM_CM4F)
+
+set(
+    TCPIP_SOURCES
+    ${freertostcp_SOURCE_DIR}/source/FreeRTOS_ARP.c
+    ${freertostcp_SOURCE_DIR}/source/FreeRTOS_BitConfig.c
+    ${freertostcp_SOURCE_DIR}/source/FreeRTOS_ICMP.c
+    ${freertostcp_SOURCE_DIR}/source/FreeRTOS_IP.c
+    ${freertostcp_SOURCE_DIR}/source/FreeRTOS_IP_Timers.c
+    ${freertostcp_SOURCE_DIR}/source/FreeRTOS_IP_Utils.c
+    ${freertostcp_SOURCE_DIR}/source/FreeRTOS_IPv4.c
+    ${freertostcp_SOURCE_DIR}/source/FreeRTOS_IPv4_Sockets.c
+    ${freertostcp_SOURCE_DIR}/source/FreeRTOS_IPv4_Utils.c
+    ${freertostcp_SOURCE_DIR}/source/FreeRTOS_ND.c
+    ${freertostcp_SOURCE_DIR}/source/FreeRTOS_RA.c
+    ${freertostcp_SOURCE_DIR}/source/FreeRTOS_Routing.c
+    ${freertostcp_SOURCE_DIR}/source/FreeRTOS_Sockets.c
+    ${freertostcp_SOURCE_DIR}/source/FreeRTOS_Stream_Buffer.c
+    ${freertostcp_SOURCE_DIR}/source/FreeRTOS_TCP_IP.c
+    ${freertostcp_SOURCE_DIR}/source/FreeRTOS_TCP_IP_IPv4.c
+    ${freertostcp_SOURCE_DIR}/source/FreeRTOS_TCP_IP_IPv6.c
+    ${freertostcp_SOURCE_DIR}/source/FreeRTOS_TCP_Reception.c
+    ${freertostcp_SOURCE_DIR}/source/FreeRTOS_TCP_State_Handling.c
+    ${freertostcp_SOURCE_DIR}/source/FreeRTOS_TCP_State_Handling_IPv4.c
+    ${freertostcp_SOURCE_DIR}/source/FreeRTOS_TCP_State_Handling_IPv6.c
+    ${freertostcp_SOURCE_DIR}/source/FreeRTOS_TCP_Transmission.c
+    ${freertostcp_SOURCE_DIR}/source/FreeRTOS_TCP_Transmission_IPv4.c
+    ${freertostcp_SOURCE_DIR}/source/FreeRTOS_TCP_Transmission_IPv6.c
+    ${freertostcp_SOURCE_DIR}/source/FreeRTOS_TCP_Utils.c
+    ${freertostcp_SOURCE_DIR}/source/FreeRTOS_TCP_Utils_IPv4.c
+    ${freertostcp_SOURCE_DIR}/source/FreeRTOS_TCP_Utils_IPv6.c
+    ${freertostcp_SOURCE_DIR}/source/FreeRTOS_TCP_WIN.c
+    ${freertostcp_SOURCE_DIR}/source/FreeRTOS_UDP_IP.c
+    ${freertostcp_SOURCE_DIR}/source/FreeRTOS_UDP_IPv4.c
+    ${freertostcp_SOURCE_DIR}/source/FreeRTOS_UDP_IPv6.c
+    ${freertostcp_SOURCE_DIR}/source/portable/BufferManagement/BufferAllocation_1.c
+    ${freertostcp_SOURCE_DIR}/source/portable/NetworkInterface/Common/phyHandling.c
+    ${freertostcp_SOURCE_DIR}/source/portable/NetworkInterface/STM32Fxx/NetworkInterface.c
+    ${freertostcp_SOURCE_DIR}/source/portable/NetworkInterface/STM32Fxx/stm32fxx_hal_eth.c)
+set(
+    TCPIP_INCLUDES
+    ${freertostcp_SOURCE_DIR}/source/include
+    ${freertostcp_SOURCE_DIR}/source/portable/NetworkInterface/include
+    ${freertostcp_SOURCE_DIR}/source/portable/NetworkInterface/STM32Fxx
+    ${freertostcp_SOURCE_DIR}/source/portable/Compiler/GCC)
 
 set(
     TRACING_SOURCES
@@ -90,6 +141,7 @@ set(
     ${stm32cubef4_SOURCE_DIR}/Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.c
     ${stm32cubef4_SOURCE_DIR}/Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_tim.c
     ${stm32cubef4_SOURCE_DIR}/Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c
+    ${stm32cubef4_SOURCE_DIR}/Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_rng.c
     ${stm32cubef4_SOURCE_DIR}/Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_ll_rcc.c
     ${stm32cubef4_SOURCE_DIR}/Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_ll_usart.c)
 set(
@@ -104,6 +156,7 @@ set(
     src/hooks.c
     src/led.c
     src/logging.c
+    src/ip.c
     src/shell_cmds.c
     src/task_shell.c
     src/task_can1.c
@@ -159,6 +212,38 @@ target_include_directories(
     ${TRACING_INCLUDES}
     ${KERNEL_INCLUDES})
 
+add_library(
+    freertos_tcpip
+    STATIC
+    ${TCPIP_SOURCES})
+
+target_include_directories(
+    freertos_tcpip
+    PRIVATE
+    include/config
+    include
+    ${HAL_INCLUDES}
+    PUBLIC
+    ${TCPIP_INCLUDES})
+
+target_compile_options(
+    freertos_tcpip
+    PRIVATE
+    -Wno-format
+    -Wno-shadow
+    -Wno-unused-variable
+    -Wno-sign-compare)
+
+target_compile_definitions(
+    freertos_tcpip
+    PRIVATE
+    HEAP4)
+
+target_link_libraries(
+    freertos_tcpip
+    hal
+    freertos)
+
 add_executable(
     ${PROJECT_NAME}
     ${APP_SOURCES})
@@ -176,7 +261,8 @@ target_compile_definitions(
 target_link_libraries(
     ${PROJECT_NAME}
     hal
-    freertos)
+    freertos
+    freertos_tcpip)
 
 add_custom_target(
     openocd

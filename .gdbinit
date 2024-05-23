@@ -4,7 +4,8 @@ monitor reset halt
 
 load
 
-break vApplicationMallocFailedHook
-break vApplicationStackOverflowHook
 break vAssertCalled
-break assert_failed
+#break assert_failed
+#break vApplicationMallocFailedHook
+#break vApplicationStackOverflowHook
+#break prvTraceAssertCreate

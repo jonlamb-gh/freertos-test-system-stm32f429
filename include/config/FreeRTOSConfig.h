@@ -44,7 +44,7 @@ void vAssertCalled(const char* file, int line);
 #define configCPU_CLOCK_HZ                               ( SystemCoreClock )
 #define configTICK_RATE_HZ                               ( ( TickType_t ) 1000 )
 #define configMINIMAL_STACK_SIZE                         ( ( unsigned short ) 256 )
-#define configTOTAL_HEAP_SIZE                            ( ( size_t ) ( 65 * 1024 ) )
+#define configTOTAL_HEAP_SIZE                            ( ( size_t ) ( 30 * 1024 ) )
 #define configMAX_TASK_NAME_LEN                          ( 30 )
 #define configUSE_16_BIT_TICKS                           0
 #define configIDLE_SHOULD_YIELD                          1
@@ -62,7 +62,7 @@ void vAssertCalled(const char* file, int line);
 #define configTIMER_TASK_PRIORITY                        ( configMAX_PRIORITIES - 1 )
 #define configUSE_COUNTING_SEMAPHORES                    1
 #define configSUPPORT_DYNAMIC_ALLOCATION                 1
-#define configSUPPORT_STATIC_ALLOCATION                  0
+#define configSUPPORT_STATIC_ALLOCATION                  1
 #define configNUM_TX_DESCRIPTORS                         15
 
 #define configUSE_MALLOC_FAILED_HOOK              1
@@ -114,6 +114,46 @@ void vAssertCalled(const char* file, int line);
 #define xPortSysTickHandler SysTick_Handler
 
 #define configCOMMAND_INT_MAX_OUTPUT_SIZE 3500
+
+/* networking definitions */
+#define ipconfigMAC_INTERRUPT_PRIORITY  ( configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY )
+#define configMAC_ISR_SIMULATOR_PRIORITY     ( configMAX_PRIORITIES - 2 )
+#define ipconfigUSE_NETWORK_EVENT_HOOK 1
+#define configNETWORK_INTERFACE_TO_USE 1L
+
+#define nwRX_TASK_STACK_SIZE                   ( configMINIMAL_STACK_SIZE * 2 )
+#define nwETHERNET_RX_HANDLER_TASK_PRIORITY    ( configMAX_PRIORITIES - 3 )
+
+#define configMAC_ADDR0    0x52
+#define configMAC_ADDR1    0x54
+#define configMAC_ADDR2    0x00
+#define configMAC_ADDR3    0x13
+#define configMAC_ADDR4    0x23
+#define configMAC_ADDR5    0xAD
+
+/* Default IP address configuration, 192.168.2.59. */
+#define configIP_ADDR0      192
+#define configIP_ADDR1      168
+#define configIP_ADDR2      2
+#define configIP_ADDR3      59
+
+/* Default gateway IP address configuration, 192.168.2.1. */
+#define configGATEWAY_ADDR0 192
+#define configGATEWAY_ADDR1 168
+#define configGATEWAY_ADDR2 2
+#define configGATEWAY_ADDR3 1
+
+/* Default netmask configuration. */
+#define configNET_MASK0     255
+#define configNET_MASK1     255
+#define configNET_MASK2     255
+#define configNET_MASK3     0
+
+/* Default DNS server configuration, 192.168.2.1. */
+#define configDNS_SERVER_ADDR0  192
+#define configDNS_SERVER_ADDR1  168
+#define configDNS_SERVER_ADDR2  2
+#define configDNS_SERVER_ADDR3  1
 
 #define STATIC_SIZE(t, s) typedef char t##_size_check_struct[1-2*!!(sizeof(t)!=(s))]
 
