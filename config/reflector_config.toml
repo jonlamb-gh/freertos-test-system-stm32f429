@@ -12,15 +12,17 @@ additional-timeline-attributes = [
 startup-task-name = 'init'
 user-event-channel = true
 interaction-mode = 'ipc'
+include-unknown-events = true
 
 [plugins.ingest.collectors.trace-recorder-rtt.metadata]
 startup-task-name = 'init'
 user-event-channel = true
 interaction-mode = 'ipc'
+include-unknown-events = true
 attach-timeout = "10s"
 chip = 'STM32F429ZITx'
 reset = true
-elf-file = 'build/firmware'
 thumb = true
-breakpoint = 'main'
+#elf-file = 'build/firmware'
+#breakpoint = 'main'
 metrics = true

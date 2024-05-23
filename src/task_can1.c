@@ -5,11 +5,12 @@
 #include "logging.h"
 #include "led.h"
 #include "can.h"
+#include "task_caneth.h"
 #include "task_can1.h"
 
 #include "stm32f4xx_hal_conf.h"
 
-#define TASK_PRIO (tskIDLE_PRIORITY + 1)
+#define TASK_PRIO (tskIDLE_PRIORITY + 2)
 #define TASK_STACK_SIZE (2 * configMINIMAL_STACK_SIZE)
 
 #define CAN1_GPIO_PORT GPIOD
@@ -122,7 +123,8 @@ static void can1_task(void* params)
         // Wait for data
         while(xMessageBufferReceive(g_rx_msgbuf, &rx_frame, sizeof(rx_frame), portMAX_DELAY) == 0);
 
-        // TODO wire up the CAN-to-ETH path
+        // Send it to the CAN-to-ETH task
+        task_caneth_enqueue_rx_frame(&rx_frame);
     }
 }
 

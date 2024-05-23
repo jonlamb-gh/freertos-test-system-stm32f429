@@ -161,6 +161,7 @@ set(
     src/task_shell.c
     src/task_can1.c
     src/task_can2.c
+    src/task_caneth.c
     vendor/src/FreeRTOS_CLI.c
     ${stm32cubef4_SOURCE_DIR}/Drivers/CMSIS/Device/ST/STM32F4xx/Source/Templates/system_stm32f4xx.c
     ${stm32cubef4_SOURCE_DIR}/Drivers/CMSIS/Device/ST/STM32F4xx/Source/Templates/gcc/startup_stm32f429xx.s)

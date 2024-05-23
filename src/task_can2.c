@@ -105,7 +105,7 @@ static void can2_task(void* params)
     (void) params;
 
     frame.header.StdId = HEARTBEAT_ID;
-    frame.header.ExtId = 0x01;
+    frame.header.ExtId = 0x00;
     frame.header.RTR = CAN_RTR_DATA;
     frame.header.IDE = CAN_ID_STD;
     frame.header.DLC = HEARTBEAT_DLC;

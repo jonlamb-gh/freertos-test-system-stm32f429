@@ -8,6 +8,7 @@
 #include "task_shell.h"
 #include "task_can1.h"
 #include "task_can2.h"
+#include "task_caneth.h"
 
 #include "stm32f4xx_hal_conf.h"
 
@@ -30,6 +31,7 @@ int main(void)
 
     led_init();
     led_on(LED_GREEN);
+    led_on(LED_BLUE);
 
     tr = xTraceEnable(TRC_START);
     configASSERT(tr == TRC_SUCCESS);
@@ -44,6 +46,7 @@ int main(void)
     ip_init();
     task_can1_start();
     task_can2_start();
+    task_caneth_start();
 
     configASSERT(xTraceDiagnosticsCheckStatus() == TRC_SUCCESS);
     const char* err = NULL;
@@ -55,6 +58,8 @@ int main(void)
     configASSERT(err == NULL);
 
     INFO("Starting scheduler");
+    led_off(LED_GREEN);
+    led_off(LED_BLUE);
     vTaskStartScheduler();
 
     while(1)
