@@ -3,6 +3,7 @@
 #include "timers.h"
 
 #include "led.h"
+#include "stats_timer.h"
 #include "logging.h"
 #include "ip.h"
 #include "task_shell.h"
@@ -10,6 +11,7 @@
 #include "task_can2.h"
 #include "task_caneth.h"
 #include "task_worker0.h"
+#include "task_stats.h"
 
 #include "stm32f4xx_hal_conf.h"
 
@@ -34,6 +36,8 @@ int main(void)
     led_on(LED_GREEN);
     led_on(LED_BLUE);
 
+    stats_timer_init();
+
     tr = xTraceEnable(TRC_START);
     configASSERT(tr == TRC_SUCCESS);
 
@@ -49,6 +53,7 @@ int main(void)
     task_caneth_start();
     task_can1_start();
     task_can2_start();
+    task_stats_start();
 
     configASSERT(xTraceDiagnosticsCheckStatus() == TRC_SUCCESS);
     const char* err = NULL;
@@ -176,7 +181,7 @@ static void configure_system_clock(void)
 }
 
 // TODO: timer/etc for this, timeouts will never get hit currently
-// Should be able to rm it once on the LL APIs
+// Should be able to rm it once on the LL APIs, or use the stats timer
 uint32_t uwTickPrio = (1UL << __NVIC_PRIO_BITS); /* Invalid PRIO */
 uint32_t HAL_GetTick(void)
 {

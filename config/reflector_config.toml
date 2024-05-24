@@ -14,6 +14,11 @@ user-event-channel = true
 interaction-mode = 'ipc'
 include-unknown-events = true
 
+    [[plugins.ingest.importers.trace-recorder.metadata.user-event-fmt-arg-attr-keys]]
+    channel = 'stats'
+    format-string = '%s %u %u %u'
+    attribute-keys = ['task', 'stack_high_water', 'task_run_time', 'total_run_time']
+
 # Just for some plotting scripts that assume we're using imported data
 [plugins.ingest.collectors.trace-recorder-rtt]
 additional-timeline-attributes = [
@@ -36,3 +41,8 @@ speed = 40000 # 40 MHz, max for st-link v2
 # with on-board st-link: transfer_rate="137.7 KiB/s" cnt=69 zero_cnt=0 max_cnt=69 avg=0.0
 rtt-read-buffer-size = 4096
 rtt-poll-interval = "1ns"
+
+    [[plugins.ingest.collectors.trace-recorder-rtt.metadata.user-event-fmt-arg-attr-keys]]
+    channel = 'stats'
+    format-string = '%s %u %u %u'
+    attribute-keys = ['task', 'stack_high_water', 'task_run_time', 'total_run_time']

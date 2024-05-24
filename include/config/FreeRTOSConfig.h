@@ -53,7 +53,7 @@ void vAssertCalled(const char* file, int line);
 #define configCHECK_FOR_STACK_OVERFLOW                   2
 #define configUSE_TRACE_FACILITY                         1
 
-#define configGENERATE_RUN_TIME_STATS                    0
+#define configGENERATE_RUN_TIME_STATS                    1
 #define configRECORD_STACK_HIGH_ADDRESS                  1
 
 #define configMAX_PRIORITIES                             ( 5 )
@@ -89,6 +89,10 @@ void vAssertCalled(const char* file, int line);
 #define INCLUDE_xTimerPendFunctionCall            0
 #define INCLUDE_xTaskAbortDelay                   0
 #define INCLUDE_xTaskGetCurrentTaskHandle         1
+
+#include "stats_timer.h"
+#define portCONFIGURE_TIMER_FOR_RUN_TIME_STATS() /* main.c calls stats_timer_init() */
+#define portGET_RUN_TIME_COUNTER_VALUE() (stats_timer_read())
 
 #define projCOVERAGE_TEST                         0
 

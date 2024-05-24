@@ -154,6 +154,7 @@ set(
     APP_SOURCES
     src/main.c
     src/hooks.c
+    src/stats_timer.c
     src/led.c
     src/logging.c
     src/ip.c
@@ -163,6 +164,7 @@ set(
     src/task_can2.c
     src/task_caneth.c
     src/task_worker0.c
+    src/task_stats.c
     vendor/src/FreeRTOS_CLI.c
     ${stm32cubef4_SOURCE_DIR}/Drivers/CMSIS/Device/ST/STM32F4xx/Source/Templates/system_stm32f4xx.c
     ${stm32cubef4_SOURCE_DIR}/Drivers/CMSIS/Device/ST/STM32F4xx/Source/Templates/gcc/startup_stm32f429xx.s)
