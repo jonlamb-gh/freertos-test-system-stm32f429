@@ -15,12 +15,12 @@
 
 #include "stm32f4xx_hal_conf.h"
 
-#define TASK_PRIO (tskIDLE_PRIORITY + 1)
+#define TASK_PRIO (tskIDLE_PRIORITY + 2)
 #define TASK_STACK_SIZE (2 * configMINIMAL_STACK_SIZE)
 
 #define FLUSH_TIMEOUT pdMS_TO_TICKS(100)
 
-#define CAN_FRAME_QUEUE_LENGTH 16
+#define CAN_FRAME_QUEUE_LENGTH 32
 
 #define QUEUE_EVENT_BIT (0x01)
 #define FLUSH_EVENT_BIT (0x02)
@@ -63,24 +63,27 @@ void task_caneth_start(void)
 void task_caneth_enqueue_rx_frame(const can_rx_frame_s *const frame)
 {
     BaseType_t ret;
-    caneth_frame_s qframe = {0};
-
-    configASSERT(frame != NULL);
-    qframe.id = (frame->header.IDE == CAN_ID_STD) ? frame->header.StdId : frame->header.ExtId;
-    qframe.count = frame->header.DLC;
-    qframe.ext_flag = (frame->header.IDE == CAN_ID_EXT);
-    qframe.rtr_flag = (frame->header.RTR == CAN_RTR_REMOTE);
-    (void) memcpy(qframe.data, frame->data, sizeof(qframe.data));
-
-    ret = xQueueSend(g_can_frame_queue, &qframe, 0 /* non-blocking */);
-    if(ret == pdTRUE)
+    
+    if(FreeRTOS_IsNetworkUp() == pdTRUE)
     {
-        ret = xTaskNotify(g_caneth_task, QUEUE_EVENT_BIT, eSetBits);
-        configASSERT(ret == pdPASS);
-    }
-    else
-    {
-        ERR("Failed to enqueue CAN rx frame");
+        caneth_frame_s qframe = {0};
+        configASSERT(frame != NULL);
+        qframe.id = (frame->header.IDE == CAN_ID_STD) ? frame->header.StdId : frame->header.ExtId;
+        qframe.count = frame->header.DLC;
+        qframe.ext_flag = (frame->header.IDE == CAN_ID_EXT);
+        qframe.rtr_flag = (frame->header.RTR == CAN_RTR_REMOTE);
+        (void) memcpy(qframe.data, frame->data, sizeof(qframe.data));
+
+        ret = xQueueSend(g_can_frame_queue, &qframe, 0 /* non-blocking */);
+        if(ret == pdTRUE)
+        {
+            ret = xTaskNotify(g_caneth_task, QUEUE_EVENT_BIT, eSetBits);
+            configASSERT(ret == pdPASS);
+        }
+        else
+        {
+            ERR("Failed to enqueue CANETH rx frame");
+        }
     }
 }
 

@@ -8,10 +8,10 @@
 
 #include "stm32f4xx_hal_conf.h"
 
-#define TASK_PRIO (tskIDLE_PRIORITY + 1)
+#define TASK_PRIO (tskIDLE_PRIORITY + 4)
 #define TASK_STACK_SIZE (2 * configMINIMAL_STACK_SIZE)
 
-#define HEARTBEAT_TX_INTERVAL (pdMS_TO_TICKS(10))
+#define HEARTBEAT_TX_INTERVAL (pdMS_TO_TICKS(50))
 
 #define CAN2_GPIO_PORT GPIOB
 #define CAN2_RX_PIN GPIO_PIN_5

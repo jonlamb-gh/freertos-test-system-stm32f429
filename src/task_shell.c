@@ -18,7 +18,7 @@
 #include "stm32f4xx_hal_conf.h"
 #include "stm32f4xx_ll_usart.h"
 
-#define TASK_PRIO (tskIDLE_PRIORITY + 2)
+#define TASK_PRIO (tskIDLE_PRIORITY + 1)
 #define TASK_STACK_SIZE (4 * configMINIMAL_STACK_SIZE)
 
 #define SHELL_UART USART3

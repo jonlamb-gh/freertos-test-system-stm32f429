@@ -6,11 +6,12 @@
 #include "led.h"
 #include "can.h"
 #include "task_caneth.h"
+#include "task_worker0.h"
 #include "task_can1.h"
 
 #include "stm32f4xx_hal_conf.h"
 
-#define TASK_PRIO (tskIDLE_PRIORITY + 2)
+#define TASK_PRIO (tskIDLE_PRIORITY + 3)
 #define TASK_STACK_SIZE (2 * configMINIMAL_STACK_SIZE)
 #define ISR_PRIO configLIBRARY_LOWEST_INTERRUPT_PRIORITY
 
@@ -132,6 +133,12 @@ static void can1_task(void* params)
 
         // Send it to the CAN-to-ETH task
         task_caneth_enqueue_rx_frame(&rx_frame);
+
+        // Dispatch to various workers
+        if(rx_frame.header.StdId == DO_WORK0_ID)
+        {
+            task_worker0_do_work(&rx_frame);
+        }
     }
 }
 

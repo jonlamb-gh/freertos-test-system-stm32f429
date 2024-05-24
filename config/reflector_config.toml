@@ -14,6 +14,12 @@ user-event-channel = true
 interaction-mode = 'ipc'
 include-unknown-events = true
 
+# Just for some plotting scripts that assume we're using imported data
+[plugins.ingest.collectors.trace-recorder-rtt]
+additional-timeline-attributes = [
+    "trace_recorder.import.file='NA'",
+]
+
 [plugins.ingest.collectors.trace-recorder-rtt.metadata]
 startup-task-name = 'init'
 user-event-channel = true
@@ -23,6 +29,10 @@ attach-timeout = "10s"
 chip = 'STM32F429ZITx'
 reset = true
 thumb = true
+metrics = true
+speed = 40000 # 40 MHz, max for st-link v2
 #elf-file = 'build/firmware'
 #breakpoint = 'main'
-metrics = true
+# with on-board st-link: transfer_rate="137.7 KiB/s" cnt=69 zero_cnt=0 max_cnt=69 avg=0.0
+rtt-read-buffer-size = 4096
+rtt-poll-interval = "1ns"
