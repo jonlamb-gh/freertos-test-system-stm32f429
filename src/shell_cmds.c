@@ -8,42 +8,63 @@
 
 #include "logging.h"
 
-static BaseType_t example_cmd(char* write_buf, size_t write_buf_len, const char* cmd);
-static const CLI_Command_Definition_t EXAMPLE_CMD =
+static BaseType_t trace_cmd(char* write_buf, size_t write_buf_len, const char* cmd);
+static const CLI_Command_Definition_t TRACE_CMD =
 {
-    "example",
-    "\r\nexample:\r\n This is an example\r\n",
-    example_cmd,
-    0
-};
-
-static const CLI_Command_Definition_t EXAMPLE2_CMD =
-{
-    "example2",
-    "\r\nexample2:\r\n This is an example\r\n",
-    example_cmd,
-    0
+    "trace",
+    "\ntrace: Tracing commands\n  start\n  stop\n",
+    trace_cmd,
+    1 /* start/stop/restart */
 };
 
 void shell_cmds_register(void)
 {
     BaseType_t ret;
 
-    ret = FreeRTOS_CLIRegisterCommand(&EXAMPLE_CMD);
-    configASSERT(ret == pdPASS);
-    
-    ret = FreeRTOS_CLIRegisterCommand(&EXAMPLE2_CMD);
+    ret = FreeRTOS_CLIRegisterCommand(&TRACE_CMD);
     configASSERT(ret == pdPASS);
 }
 
-static BaseType_t example_cmd(char* write_buf, size_t write_buf_len, const char* cmd)
+static BaseType_t trace_cmd(char* write_buf, size_t write_buf_len, const char* cmd)
 {
-    const char MSG[] = "This is output from example cmd.\r\n";
-    (void) cmd;
+    traceResult tr;
+    const char* param;
+    BaseType_t param_len;
+    const char START[] = "start";
+    const char STOP[] = "stop";
 
     configASSERT(write_buf != NULL);
 
-    strncpy(write_buf, MSG, write_buf_len);
+    param = FreeRTOS_CLIGetParameter(cmd, 1, &param_len);
+    configASSERT(param != NULL);
+
+    if(strncmp(param, START, sizeof(START)) == 0)
+    {
+        if(xTraceIsRecorderEnabled() != 0)
+        {
+            tr = xTraceDisable();
+            configASSERT(tr == TRC_SUCCESS);
+            tr = xTraceEnable(TRC_START);
+            configASSERT(tr == TRC_SUCCESS);
+            strncpy(write_buf, "Tracing restarted\n", write_buf_len);
+        }
+        else
+        {
+            tr = xTraceEnable(TRC_START);
+            configASSERT(tr == TRC_SUCCESS);
+            strncpy(write_buf, "Tracing started\n", write_buf_len);
+        }
+    }
+    else if(strncmp(param, STOP, sizeof(STOP)) == 0)
+    {
+        strncpy(write_buf, "Tracing stopped\n", write_buf_len);
+        tr = xTraceDisable();
+        configASSERT(tr == TRC_SUCCESS);
+    }
+    else
+    {
+        strncpy(write_buf, "Valid parameters are 'start' and 'stop'\n", write_buf_len);
+    }
 
     // There is no more data to return after this single string
     return pdFALSE;

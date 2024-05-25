@@ -8,6 +8,8 @@
 #include "message_buffer.h"
 #include "FreeRTOS_CLI.h"
 
+#include <stdarg.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "logging.h"
@@ -27,7 +29,7 @@
 #define SHELL_UART_RX_PIN GPIO_PIN_9
 
 #define RX_MSGBUF_SIZE (64)
-#define SHELL_INPUT_BUFFER_SIZE (64)
+#define SHELL_INPUT_BUFFER_SIZE (128)
 
 // Control chars
 #define BS (0x08)
@@ -37,8 +39,8 @@ static void init_uart(void);
 static void putstr(const char* str, size_t len);
 static void shell_task(void* params);
 
-static const char WELCOME_MSG[] = "<<Test System Shell>>\r\nType help to view a list of registered commands.\r\n\r\n";
-static const char NEWLINE[] = "\r\n";
+static const char WELCOME_MSG[] = "<<Test System Shell>>\nType help to view a list of registered commands.\n\n";
+static const char NEWLINE[] = "\n";
 
 static MessageBufferHandle_t g_rx_msgbuf = NULL;
 static char g_input_buffer[SHELL_INPUT_BUFFER_SIZE] = {0};
@@ -63,6 +65,18 @@ void task_shell_start(void)
             TASK_PRIO,
             NULL);
     configASSERT(ret == pdPASS);
+}
+
+// NOTE: expecting this to be called by the FreeRTOS hooks, it will corrupt
+// the global input buffer, which is ok in this context
+void task_shell_unsafe_printf(const char* fmt, ...)
+{
+    va_list arg;
+
+    va_start(arg, fmt);
+    vsnprintf(g_input_buffer, sizeof(g_input_buffer), fmt, arg);
+    va_end(arg);
+    putstr(g_input_buffer, strlen(g_input_buffer));
 }
 
 static void init_uart(void)
