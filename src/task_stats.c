@@ -14,17 +14,20 @@
 
 typedef struct
 {
+    TaskHandle_t task;
     TraceStringHandle_t sym;
-    const char* name;
-} task_name_s;
+    unsigned long last_runtime_counter;
+} task_state_s;
 
 static void stats_task(void* params);
-static void log_task_stats(const TaskStatus_t* s, unsigned long total_runtime);
-static TraceStringHandle_t task_name_sym(const char* name);
+static void log_task_stats(const TaskStatus_t* status, const task_state_s* state, unsigned long total_runtime);
+static TraceStringHandle_t task_name_sym(const TaskStatus_t* s);
+static task_state_s* task_state(const TaskStatus_t* s);
 
 static TraceStringHandle_t g_stats_ch = NULL;
-static task_name_s g_task_names[MAX_TASKS] = {0};
+static task_state_s g_task_state[MAX_TASKS] = {0};
 static TaskStatus_t g_task_stats[MAX_TASKS] = {0};
+static unsigned long g_last_total_runtime = 0;
 
 void task_stats_start(void)
 {
@@ -67,61 +70,48 @@ static void stats_task(void* params)
         num_tasks = uxTaskGetSystemState(g_task_stats, num_tasks, &total_runtime);
         configASSERT(num_tasks != 0);
 
-        if((total_runtime / 100) != 0)
+        for(i = 0; i < num_tasks; i += 1)
         {
-            for(i = 0; i < num_tasks; i += 1)
+            task_state_s* state = task_state(&g_task_stats[i]);
+
+            if((total_runtime / 100) != 0)
             {
-                log_task_stats(&g_task_stats[i], total_runtime);
+                log_task_stats(&g_task_stats[i], state, total_runtime);
             }
+
+            state->last_runtime_counter = g_task_stats[i].ulRunTimeCounter;
         }
+
+        g_last_total_runtime = total_runtime;
     }
 }
 
-static void log_task_stats(const TaskStatus_t* s, unsigned long total_runtime)
+static void log_task_stats(const TaskStatus_t* status, const task_state_s* state, unsigned long total_runtime)
 {
     traceResult tr;
 
     tr = xTracePrintF(
             g_stats_ch,
             "%s %u %u %u",
-            task_name_sym(s->pcTaskName),
-            s->usStackHighWaterMark,
-            s->ulRunTimeCounter,
-            total_runtime);
+            task_name_sym(status),
+            status->usStackHighWaterMark,
+            status->ulRunTimeCounter - state->last_runtime_counter,
+            total_runtime - g_last_total_runtime);
     configASSERT(tr == TRC_SUCCESS);
 }
 
-static TraceStringHandle_t task_name_sym(const char* name)
+static TraceStringHandle_t task_name_sym(const TaskStatus_t* s)
 {
     int i;
-    traceResult tr;
     TraceStringHandle_t sym = NULL;
 
-    // Check if already registered
     for(i = 0; i < MAX_TASKS; i += 1)
     {
-        if(g_task_names[i].sym != NULL)
+        if(g_task_state[i].sym != NULL)
         {
-            if(strncmp(g_task_names[i].name, name, configMAX_TASK_NAME_LEN) == 0)
+            if(g_task_state[i].task == s->xHandle)
             {
-                sym = g_task_names[i].sym;
-                break;
-            }
-        }
-    }
-
-    // Allocate a new entry
-    if(sym == NULL)
-    {
-        for(i = 0; i < MAX_TASKS; i += 1)
-        {
-            if(g_task_names[i].sym == NULL)
-            {
-                configASSERT(g_task_names[i].name == NULL);
-                tr = xTraceStringRegister(name, &sym);
-                configASSERT(tr == TRC_SUCCESS);
-                g_task_names[i].sym = sym;
-                g_task_names[i].name = name;
+                sym = g_task_state[i].sym;
                 break;
             }
         }
@@ -130,4 +120,42 @@ static TraceStringHandle_t task_name_sym(const char* name)
     configASSERT(sym != NULL);
 
     return sym;
+}
+
+static task_state_s* task_state(const TaskStatus_t* s)
+{
+    int i;
+    traceResult tr;
+    task_state_s* state = NULL;
+
+    // Check if already registered
+    for(i = 0; i < MAX_TASKS; i += 1)
+    {
+        if(g_task_state[i].task == s->xHandle)
+        {
+            state = &g_task_state[i];
+            break;
+        }
+    }
+
+    // Allocate a new entry
+    if(state == NULL)
+    {
+        for(i = 0; i < MAX_TASKS; i += 1)
+        {
+            if(g_task_state[i].task == NULL)
+            {
+                configASSERT(g_task_state[i].sym == NULL);
+                tr = xTraceStringRegister(s->pcTaskName, &g_task_state[i].sym);
+                configASSERT(tr == TRC_SUCCESS);
+                g_task_state[i].task = s->xHandle;
+                state = &g_task_state[i];
+                break;
+            }
+        }
+    }
+
+    configASSERT(state != NULL);
+
+    return state;
 }
