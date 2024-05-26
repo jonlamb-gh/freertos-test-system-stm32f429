@@ -11,6 +11,7 @@
 #include "task_can2.h"
 #include "task_caneth.h"
 #include "task_worker0.h"
+#include "task_worker1.h"
 #include "task_stats.h"
 
 #include "stm32f4xx_hal_conf.h"
@@ -49,6 +50,7 @@ int main(void)
 
     task_shell_start();
     task_worker0_start();
+    task_worker1_start();
     ip_init();
     task_caneth_start();
     task_can1_start();

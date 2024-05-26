@@ -7,6 +7,7 @@
 #include "can.h"
 #include "task_caneth.h"
 #include "task_worker0.h"
+#include "task_worker1.h"
 #include "task_can1.h"
 
 #include "stm32f4xx_hal_conf.h"
@@ -138,6 +139,11 @@ static void can1_task(void* params)
         if(rx_frame.header.StdId == DO_WORK0_ID)
         {
             task_worker0_do_work(&rx_frame);
+
+            if(rx_frame.data[0] % 10 == 0)
+            {
+                task_worker1_do_work(&rx_frame);
+            }
         }
     }
 }
