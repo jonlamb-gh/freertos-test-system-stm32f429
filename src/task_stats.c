@@ -9,7 +9,7 @@
 #define TASK_PRIO (tskIDLE_PRIORITY + 1)
 #define TASK_STACK_SIZE (2 * configMINIMAL_STACK_SIZE)
 
-#define STATS_INTERVAL pdMS_TO_TICKS(1000)
+#define STATS_INTERVAL pdMS_TO_TICKS(500)
 #define MAX_TASKS TRC_CFG_STACK_MONITOR_MAX_TASKS
 
 typedef struct
@@ -21,7 +21,6 @@ typedef struct
 
 static void stats_task(void* params);
 static void log_task_stats(const TaskStatus_t* status, const task_state_s* state, unsigned long total_runtime);
-static TraceStringHandle_t task_name_sym(const TaskStatus_t* s);
 static task_state_s* task_state(const TaskStatus_t* s);
 
 static TraceStringHandle_t g_stats_ch = NULL;
@@ -93,33 +92,11 @@ static void log_task_stats(const TaskStatus_t* status, const task_state_s* state
     tr = xTracePrintF(
             g_stats_ch,
             "%s %u %u %u",
-            task_name_sym(status),
+            state->sym,
             status->usStackHighWaterMark,
             status->ulRunTimeCounter - state->last_runtime_counter,
             total_runtime - g_last_total_runtime);
     configASSERT(tr == TRC_SUCCESS);
-}
-
-static TraceStringHandle_t task_name_sym(const TaskStatus_t* s)
-{
-    int i;
-    TraceStringHandle_t sym = NULL;
-
-    for(i = 0; i < MAX_TASKS; i += 1)
-    {
-        if(g_task_state[i].sym != NULL)
-        {
-            if(g_task_state[i].task == s->xHandle)
-            {
-                sym = g_task_state[i].sym;
-                break;
-            }
-        }
-    }
-
-    configASSERT(sym != NULL);
-
-    return sym;
 }
 
 static task_state_s* task_state(const TaskStatus_t* s)
