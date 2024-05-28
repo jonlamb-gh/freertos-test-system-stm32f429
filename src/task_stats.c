@@ -89,14 +89,17 @@ static void log_task_stats(const TaskStatus_t* status, const task_state_s* state
 {
     traceResult tr;
 
-    tr = xTracePrintF(
-            g_stats_ch,
-            "%s %u %u %u",
-            state->sym,
-            status->usStackHighWaterMark,
-            status->ulRunTimeCounter - state->last_runtime_counter,
-            total_runtime - g_last_total_runtime);
-    configASSERT(tr == TRC_SUCCESS);
+    if(xTraceIsRecorderEnabled() != 0)
+    {
+        tr = xTracePrintF(
+                g_stats_ch,
+                "%s %u %u %u",
+                state->sym,
+                status->usStackHighWaterMark,
+                status->ulRunTimeCounter - state->last_runtime_counter,
+                total_runtime - g_last_total_runtime);
+        configASSERT(tr == TRC_SUCCESS);
+    }
 }
 
 static task_state_s* task_state(const TaskStatus_t* s)

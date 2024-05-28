@@ -40,6 +40,8 @@ int main(void)
     stats_timer_init();
 
     tr = xTraceEnable(TRC_START);
+    //tr = xTraceEnable(TRC_START_AWAIT_HOST);
+    //tr = xTraceEnable(TRC_START_FROM_HOST);
     configASSERT(tr == TRC_SUCCESS);
 
     logging_init();

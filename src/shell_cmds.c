@@ -12,7 +12,7 @@ static BaseType_t trace_cmd(char* write_buf, size_t write_buf_len, const char* c
 static const CLI_Command_Definition_t TRACE_CMD =
 {
     "trace",
-    "\ntrace: Tracing commands\n  start\n  stop\n",
+    "\ntrace: Tracing commands\n  start\n  stop\n  status\n",
     trace_cmd,
     1 /* start/stop/restart */
 };
@@ -32,6 +32,7 @@ static BaseType_t trace_cmd(char* write_buf, size_t write_buf_len, const char* c
     BaseType_t param_len;
     const char START[] = "start";
     const char STOP[] = "stop";
+    const char STATUS[] = "status";
 
     configASSERT(write_buf != NULL);
 
@@ -60,6 +61,17 @@ static BaseType_t trace_cmd(char* write_buf, size_t write_buf_len, const char* c
         strncpy(write_buf, "Tracing stopped\n", write_buf_len);
         tr = xTraceDisable();
         configASSERT(tr == TRC_SUCCESS);
+    }
+    else if(strncmp(param, STATUS, sizeof(STATUS)) == 0)
+    {
+        if(xTraceIsRecorderEnabled() != 0)
+        {
+            strncpy(write_buf, "Tracing enabled\n", write_buf_len);
+        }
+        else
+        {
+            strncpy(write_buf, "Tracing disabled\n", write_buf_len);
+        }
     }
     else
     {
