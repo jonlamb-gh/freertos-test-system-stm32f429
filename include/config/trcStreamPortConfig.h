@@ -89,7 +89,7 @@ extern "C" {
 * But integrated J-Link OB interfaces are slower and needs about 5-10 KB, 
 * depending on the amount of data produced.
 */
-#define TRC_CFG_STREAM_PORT_RTT_UP_BUFFER_SIZE 5120
+#define TRC_CFG_STREAM_PORT_RTT_UP_BUFFER_SIZE (2 * 5120)
 
 /**
 * @def TRC_CFG_STREAM_PORT_RTT_DOWN_BUFFER_SIZE

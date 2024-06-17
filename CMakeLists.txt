@@ -15,7 +15,7 @@ FetchContent_Declare(
 FetchContent_Declare(
     freertostcp
     GIT_REPOSITORY "https://github.com/FreeRTOS/FreeRTOS-Plus-TCP.git"
-    GIT_TAG "V4.1.0"
+    GIT_TAG "V4.1.1"
 )
 
 FetchContent_Declare(
@@ -27,7 +27,7 @@ FetchContent_Declare(
 FetchContent_Declare(
     stm32cubef4
     GIT_REPOSITORY "https://github.com/STMicroelectronics/STM32CubeF4.git"
-    GIT_TAG "v1.27.1"
+    GIT_TAG "v1.28.0"
 )
 
 # Use FetchContent_Populate instead of FetchContent_MakeAvailable because
@@ -166,6 +166,7 @@ set(
     src/task_worker0.c
     src/task_worker1.c
     src/task_stats.c
+    generated/canproto.c
     vendor/src/FreeRTOS_CLI.c
     ${stm32cubef4_SOURCE_DIR}/Drivers/CMSIS/Device/ST/STM32F4xx/Source/Templates/system_stm32f4xx.c
     ${stm32cubef4_SOURCE_DIR}/Drivers/CMSIS/Device/ST/STM32F4xx/Source/Templates/gcc/startup_stm32f429xx.s)
@@ -173,6 +174,7 @@ set(
     APP_INCLUDES
     include
     include/config
+    generated
     vendor/include)
 
 add_library(

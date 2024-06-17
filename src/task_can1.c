@@ -22,6 +22,7 @@
 
 #define RX_MSGBUF_SIZE (sizeof(can_rx_frame_s) * 32)
 
+static void init_gpio(void);
 static void init_can1(void);
 static void can1_task(void* params);
 static void can1_pending_cb(CAN_HandleTypeDef *hcan);
@@ -39,6 +40,7 @@ void task_can1_start(void)
     tr = xTraceISRRegister("CAN1_RX0", ISR_PRIO, &g_isr_handle);
     configASSERT(tr == TRC_SUCCESS);
 
+    init_gpio();
     init_can1();
 
     g_rx_msgbuf = xMessageBufferCreate(RX_MSGBUF_SIZE);
@@ -53,6 +55,25 @@ void task_can1_start(void)
             TASK_PRIO,
             NULL);
     configASSERT(ret == pdPASS);
+}
+
+// Setup PC10 as output pin to indicate we're in the ISR
+// for tracing purposes
+static void init_gpio(void)
+{
+    GPIO_InitTypeDef gpio_init =
+    {
+        .Pin = GPIO_PIN_10,
+        .Mode = GPIO_MODE_OUTPUT_PP,
+        .Pull = GPIO_NOPULL,
+        .Speed = GPIO_SPEED_FREQ_VERY_HIGH,
+        .Alternate = 0,
+    };
+
+    __HAL_RCC_GPIOC_CLK_ENABLE();
+    HAL_GPIO_Init(GPIOC, &gpio_init);
+
+    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_RESET);
 }
 
 static void init_can1(void)
@@ -82,7 +103,7 @@ static void init_can1(void)
     g_can.Init.AutoRetransmission = ENABLE;
     g_can.Init.ReceiveFifoLocked = DISABLE;
     g_can.Init.TransmitFifoPriority = DISABLE;
-    g_can.Init.Mode = CAN_MODE_NORMAL;
+    g_can.Init.Mode = CAN_MODE_SILENT;
     g_can.Init.SyncJumpWidth = CAN_SJW_1TQ;
     g_can.Init.TimeSeg1 = CAN_BS1_15TQ;
     g_can.Init.TimeSeg2 = CAN_BS2_2TQ;
@@ -124,8 +145,13 @@ static void init_can1(void)
 
 static void can1_task(void* params)
 {
+    int ret;
     can_rx_frame_s rx_frame;
+    struct canproto_do_work0_t do_work0;
     (void) params;
+
+    ret = canproto_do_work0_init(&do_work0);
+    configASSERT(ret == 0);
 
     while(1)
     {
@@ -136,11 +162,14 @@ static void can1_task(void* params)
         task_caneth_enqueue_rx_frame(&rx_frame);
 
         // Dispatch to various workers
-        if(rx_frame.header.StdId == DO_WORK0_ID)
+        if(rx_frame.header.StdId == CANPROTO_DO_WORK0_FRAME_ID)
         {
             task_worker0_do_work(&rx_frame);
 
-            if(rx_frame.data[0] % 10 == 0)
+            ret = canproto_do_work0_unpack(&do_work0, &rx_frame.data[0], rx_frame.header.DLC);
+            configASSERT(ret == 0);
+
+            if(do_work0.counter % 10 == 0)
             {
                 task_worker1_do_work(&rx_frame);
             }
@@ -186,6 +215,8 @@ static void can1_error_cb(CAN_HandleTypeDef *hcan)
 
 void CAN1_RX0_IRQHandler(void)
 {
+    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_SET);
+
     traceResult tr;
 
     tr = xTraceISRBegin(g_isr_handle);
@@ -193,6 +224,8 @@ void CAN1_RX0_IRQHandler(void)
 
     HAL_CAN_IRQHandler(&g_can);
 
-    tr = xTraceISREnd(0);
+    tr = xTraceISREnd(1);
     configASSERT(tr == TRC_SUCCESS);
+
+    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_RESET);
 }

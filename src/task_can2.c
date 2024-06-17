@@ -57,7 +57,7 @@ static void init_can2(void)
 
     // 500K
     g_can.Instance = CAN2;
-    g_can.Init.TimeTriggeredMode = DISABLE;
+    g_can.Init.TimeTriggeredMode = ENABLE;
     g_can.Init.AutoBusOff = DISABLE;
     g_can.Init.AutoWakeUp = DISABLE;
     g_can.Init.AutoRetransmission = ENABLE;
@@ -101,15 +101,18 @@ static void can2_task(void* params)
     TickType_t next_wake;
     uint32_t tx_mbox;
     can_tx_frame_s frame = {0};
-    heartbeat_msg_s * const hb_msg = (heartbeat_msg_s*) &frame.data[0];
+    struct canproto_heartbeat_t hb_msg;
     (void) params;
 
-    frame.header.StdId = HEARTBEAT_ID;
+    frame.header.StdId = CANPROTO_HEARTBEAT_FRAME_ID;
     frame.header.ExtId = 0x00;
     frame.header.RTR = CAN_RTR_DATA;
     frame.header.IDE = CAN_ID_STD;
-    frame.header.DLC = HEARTBEAT_DLC;
-    frame.header.TransmitGlobalTime = DISABLE;
+    frame.header.DLC = CANPROTO_HEARTBEAT_LENGTH;
+    frame.header.TransmitGlobalTime = ENABLE;
+
+    ret = canproto_heartbeat_init(&hb_msg);
+    configASSERT(ret == 0);
 
     next_wake = xTaskGetTickCount();
     while(1)
@@ -120,7 +123,10 @@ static void can2_task(void* params)
             WARN("Deadline missed");
         }
 
-        hb_msg->seqnum += 1;
+        hb_msg.seqnum += 1;
+        ret = canproto_heartbeat_pack(&frame.data[0], &hb_msg, sizeof(frame.data));
+        configASSERT(ret == CANPROTO_HEARTBEAT_LENGTH);
+
         ret = HAL_CAN_AddTxMessage(&g_can, &frame.header, &frame.data[0], &tx_mbox);
         if(ret != HAL_OK)
         {

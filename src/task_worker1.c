@@ -42,7 +42,7 @@ void task_worker1_do_work(const can_rx_frame_s *const frame)
 
     configASSERT(frame != NULL);
     configASSERT(frame->header.IDE == CAN_ID_STD);
-    configASSERT(frame->header.StdId == DO_WORK0_ID);
+    configASSERT(frame->header.StdId == CANPROTO_DO_WORK0_FRAME_ID);
     ret = xQueueSend(g_can_frame_queue, frame, 0 /* non-blocking */);
     if(ret != pdTRUE)
     {
