@@ -14,6 +14,7 @@
 
 #include "logging.h"
 #include "led.h"
+#include "status_flags.h"
 #include "shell_cmds.h"
 #include "task_shell.h"
 
@@ -229,6 +230,6 @@ void USART3_IRQHandler(void)
     }
     else
     {
-        led_on(LED_RED);
+        status_flags_set_shell_error();
     }
 }

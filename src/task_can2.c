@@ -3,6 +3,7 @@
 
 #include "logging.h"
 #include "led.h"
+#include "status_flags.h"
 #include "can.h"
 #include "task_can2.h"
 
@@ -124,6 +125,11 @@ static void can2_task(void* params)
         }
 
         hb_msg.seqnum += 1;
+        hb_msg.can1_error = status_flags_get_can1_error();
+        hb_msg.can2_error = status_flags_get_can2_error();
+        hb_msg.caneth_error = status_flags_get_caneth_error();
+        hb_msg.shell_error = status_flags_get_shell_error();
+
         ret = canproto_heartbeat_pack(&frame.data[0], &hb_msg, sizeof(frame.data));
         configASSERT(ret == CANPROTO_HEARTBEAT_LENGTH);
 
@@ -131,6 +137,7 @@ static void can2_task(void* params)
         if(ret != HAL_OK)
         {
             led_on(LED_RED);
+            status_flags_set_can2_error();
         }
     }
 }
@@ -140,4 +147,5 @@ static void can2_error_cb(CAN_HandleTypeDef *hcan)
     (void) hcan;
 
     led_on(LED_RED);
+    status_flags_set_can2_error();
 }

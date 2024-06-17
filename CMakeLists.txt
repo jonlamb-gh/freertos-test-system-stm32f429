@@ -157,6 +157,7 @@ set(
     src/stats_timer.c
     src/led.c
     src/logging.c
+    src/status_flags.c
     src/ip.c
     src/shell_cmds.c
     src/task_shell.c

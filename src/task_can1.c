@@ -4,6 +4,7 @@
 
 #include "logging.h"
 #include "led.h"
+#include "status_flags.h"
 #include "can.h"
 #include "task_caneth.h"
 #include "task_worker0.h"
@@ -197,12 +198,14 @@ static void can1_pending_cb(CAN_HandleTypeDef *hcan)
         if(bytes_sent == 0)
         {
             led_on(LED_RED);
+            status_flags_set_can1_error();
         }
         portYIELD_FROM_ISR(higher_prio_task_woken);
     }
     else
     {
         led_on(LED_RED);
+        status_flags_set_can1_error();
     }
 }
 
@@ -211,6 +214,7 @@ static void can1_error_cb(CAN_HandleTypeDef *hcan)
     (void) hcan;
 
     led_on(LED_RED);
+    status_flags_set_can1_error();
 }
 
 void CAN1_RX0_IRQHandler(void)

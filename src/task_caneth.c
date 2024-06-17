@@ -9,6 +9,8 @@
 #include <string.h> /* memcpy */
 
 #include "logging.h"
+#include "led.h"
+#include "status_flags.h"
 #include "can.h"
 #include "caneth.h"
 #include "task_caneth.h"
@@ -83,6 +85,8 @@ void task_caneth_enqueue_rx_frame(const can_rx_frame_s *const frame)
         else
         {
             ERR("Failed to enqueue CANETH rx frame");
+            led_on(LED_RED);
+            status_flags_set_caneth_error();
         }
     }
 }
@@ -168,6 +172,8 @@ static void caneth_task(void* params)
             {
                 ERR("Failed to send CANETH udp");
                 FreeRTOS_ReleaseUDPPayloadBuffer((void*) udp_buffer);
+                led_on(LED_RED);
+                status_flags_set_caneth_error();
             }
 
             // Favor recency, will drop buffered frames if they weren't sent

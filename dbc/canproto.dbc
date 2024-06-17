@@ -41,7 +41,8 @@ BO_ 10 Heartbeat: 8 ECU
  SG_ hw_timestamp : 55|16@0+ (1,0) [0|65535] "" Vector__XXX
  SG_ can1_error : 16|1@1+ (1,0) [0|0] "" Vector__XXX
  SG_ can2_error : 17|1@1+ (1,0) [0|0] "" Vector__XXX
- SG_ shell_error : 18|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ shell_error : 19|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ caneth_error : 18|1@1+ (1,0) [0|0] "" Vector__XXX
 
 BO_ 11 DoWork0: 8 Tool
  SG_ counter : 0|8@1+ (1,0) [0|255] "" Vector__XXX
