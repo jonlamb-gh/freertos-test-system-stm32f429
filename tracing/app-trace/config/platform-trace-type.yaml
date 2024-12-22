@@ -1,7 +1,8 @@
 native-byte-order: little-endian
 $features:
-  # 32 bit magic number
-  magic-field-type: uint32
+  # Disable magic number and UUID
+  magic-field-type: false
+  uuid-field-type: false
   # 8 bit stream ID
   data-stream-type-id-field-type: uint8
 # See https://barectf.org/docs/barectf/3.0/yaml/clk-type-obj.html#props
