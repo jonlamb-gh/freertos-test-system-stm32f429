@@ -30,6 +30,12 @@ FetchContent_Declare(
     GIT_TAG "v1.28.0"
 )
 
+FetchContent_Declare(
+    rtt
+    GIT_REPOSITORY "https://github.com/jonlamb-gh/segger-rtt.git"
+    GIT_TAG "v8.10k"
+)
+
 # Use FetchContent_Populate instead of FetchContent_MakeAvailable because
 # we're defining build rules locally and don't want cmake to automatically
 # call add_subdirectory on these
@@ -37,6 +43,34 @@ FetchContent_Populate(freertos)
 FetchContent_Populate(freertostcp)
 FetchContent_Populate(tracerecorder)
 FetchContent_Populate(stm32cubef4)
+FetchContent_Populate(rtt)
+
+file(GLOB BARECTF_CONFIG_FILES ${CMAKE_SOURCE_DIR}/tracing/app-trace/config/*.yaml)
+
+set(BARECTF_GENERATED_FILES
+    ${CMAKE_SOURCE_DIR}/tracing/app-trace/generated/barectf-bitfield.h
+    ${CMAKE_SOURCE_DIR}/tracing/app-trace/generated/barectf.c
+    ${CMAKE_SOURCE_DIR}/tracing/app-trace/generated/barectf.h
+    ${CMAKE_SOURCE_DIR}/tracing/app-trace/generated/metadata)
+
+add_custom_command(
+    OUTPUT ${BARECTF_GENERATED_FILES}
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_SOURCE_DIR}/tracing/app-trace/generated
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_SOURCE_DIR}/tracing/app-trace/generated/schema
+    COMMAND barectf generate
+        -m ${CMAKE_SOURCE_DIR}/tracing/app-trace/generated/schema
+        -c ${CMAKE_SOURCE_DIR}/tracing/app-trace/generated
+        -H ${CMAKE_SOURCE_DIR}/tracing/app-trace/generated
+        -I ${CMAKE_SOURCE_DIR}/tracing/app-trace/config
+        ${CMAKE_SOURCE_DIR}/tracing/app-trace/config/config.yaml
+    DEPENDS ${BARECTF_CONFIG_FILES}
+    COMMENT "Generating barectf files"
+    VERBATIM)
+
+add_custom_target(
+    barectf_generated_files
+    DEPENDS
+    ${BARECTF_GENERATED_FILES})
 
 set(
     KERNEL_SOURCES
@@ -123,13 +157,30 @@ set(
     ${tracerecorder_SOURCE_DIR}/trcTask.c
     ${tracerecorder_SOURCE_DIR}/trcTimestamp.c
     ${tracerecorder_SOURCE_DIR}/trcStreamingRecorder.c
-    ${tracerecorder_SOURCE_DIR}/streamports/Jlink_RTT/SEGGER_RTT.c
-    ${tracerecorder_SOURCE_DIR}/streamports/Jlink_RTT/trcStreamPort.c)
+    tracing/streamport/trcStreamPort.c)
 set(
     TRACING_INCLUDES
     ${tracerecorder_SOURCE_DIR}/kernelports/FreeRTOS/include
     ${tracerecorder_SOURCE_DIR}/include
-    ${tracerecorder_SOURCE_DIR}/streamports/Jlink_RTT/include)
+    tracing/streamport/include)
+
+set(
+    RTT_SOURCES
+    ${rtt_SOURCE_DIR}/RTT/SEGGER_RTT.c)
+
+set(
+    RTT_INCLUDES
+    ${rtt_SOURCE_DIR}/RTT
+    tracing/rtt/include)
+
+set(
+    APP_TRACE_SOURCES
+    tracing/app-trace/app_trace.c
+    tracing/barectf-platform-rtt/barectf_platform_rtt.c)
+
+set(
+    APP_TRACE_INCLUDES
+    tracing/app-trace/include)
 
 set(
     HAL_SOURCES
@@ -179,6 +230,16 @@ set(
     vendor/include)
 
 add_library(
+    rtt
+    STATIC
+    ${RTT_SOURCES})
+
+target_include_directories(
+    rtt
+    PUBLIC
+    ${RTT_INCLUDES})
+
+add_library(
     hal
     STATIC
     ${HAL_SOURCES})
@@ -220,6 +281,10 @@ target_include_directories(
     ${TRACING_INCLUDES}
     ${KERNEL_INCLUDES})
 
+target_link_libraries(
+    freertos
+    rtt)
+
 add_library(
     freertos_tcpip
     STATIC
@@ -252,6 +317,43 @@ target_link_libraries(
     hal
     freertos)
 
+add_library(
+    generated_barectf
+    tracing/app-trace/generated/barectf.c)
+target_include_directories(
+    generated_barectf
+    PUBLIC
+    tracing/app-trace/generated)
+target_compile_options(
+    generated_barectf
+    PRIVATE
+    -Wall -Wextra -Werror -Wpedantic
+    -Wshadow -Wmissing-include-dirs -Wstrict-prototypes
+    -Wno-sign-conversion -Wno-unused-function)
+add_dependencies(
+    generated_barectf
+    barectf_generated_files)
+
+add_library(
+    app_trace
+    STATIC
+    ${APP_TRACE_SOURCES})
+
+target_include_directories(
+    app_trace
+    PRIVATE
+    # For critical section impl
+    ${stm32cubef4_SOURCE_DIR}/Drivers/CMSIS/Include
+    ${stm32cubef4_SOURCE_DIR}/Drivers/CMSIS/Device/ST/STM32F4xx/Include/
+    PUBLIC
+    tracing/barectf-platform-rtt/include
+    ${APP_TRACE_INCLUDES})
+
+target_link_libraries(
+    app_trace
+    generated_barectf
+    rtt)
+
 add_executable(
     ${PROJECT_NAME}
     ${APP_SOURCES})
@@ -270,7 +372,8 @@ target_link_libraries(
     ${PROJECT_NAME}
     hal
     freertos
-    freertos_tcpip)
+    freertos_tcpip
+    app_trace)
 
 add_custom_target(
     openocd

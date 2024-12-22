@@ -1,0 +1,8 @@
+event-record-types:
+  startup: {}
+  shutdown: {}
+  blink:
+    payload-field-type:
+      class: structure
+      members:
+        - cnt: uint8

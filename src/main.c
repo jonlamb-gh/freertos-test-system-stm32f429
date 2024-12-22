@@ -13,6 +13,7 @@
 #include "task_worker0.h"
 #include "task_worker1.h"
 #include "task_stats.h"
+#include "app_trace.h"
 
 #include "stm32f4xx_hal_conf.h"
 
@@ -43,6 +44,15 @@ int main(void)
     //tr = xTraceEnable(TRC_START_AWAIT_HOST);
     //tr = xTraceEnable(TRC_START_FROM_HOST);
     configASSERT(tr == TRC_SUCCESS);
+
+    app_trace_init();
+    TRACE(barectf_trace_startup(g_probe));
+    for(int i = 0; i < 150; i += 1)
+    {
+        TRACE(barectf_trace_blink(g_probe, (uint8_t) i));
+    }
+    TRACE(barectf_trace_shutdown(g_probe));
+    barectf_platform_rtt_fini();
 
     logging_init();
 
