@@ -51,6 +51,7 @@ int main(void)
     {
         TRACE(barectf_trace_blink(g_probe, (uint8_t) i));
     }
+    TRACE(barectf_trace_log_info(g_probe, "Some message"));
     TRACE(barectf_trace_shutdown(g_probe));
     barectf_platform_rtt_fini();
 

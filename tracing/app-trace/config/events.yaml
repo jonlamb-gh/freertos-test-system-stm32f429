@@ -6,3 +6,9 @@ event-record-types:
       class: structure
       members:
         - cnt: uint8
+  log_info:
+    log-level: INFO
+    payload-field-type:
+      class: structure
+      members:
+        - msg: string
