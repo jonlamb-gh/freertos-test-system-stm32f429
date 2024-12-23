@@ -45,32 +45,10 @@ FetchContent_Populate(tracerecorder)
 FetchContent_Populate(stm32cubef4)
 FetchContent_Populate(rtt)
 
-file(GLOB BARECTF_CONFIG_FILES ${CMAKE_SOURCE_DIR}/tracing/app-trace/config/*.yaml)
+SET(SYSTEM_TRACE_CONFIG_PATH ${CMAKE_SOURCE_DIR}/include/config/tracing)
 
-set(BARECTF_GENERATED_FILES
-    ${CMAKE_SOURCE_DIR}/tracing/app-trace/generated/barectf-bitfield.h
-    ${CMAKE_SOURCE_DIR}/tracing/app-trace/generated/barectf.c
-    ${CMAKE_SOURCE_DIR}/tracing/app-trace/generated/barectf.h
-    ${CMAKE_SOURCE_DIR}/tracing/app-trace/generated/metadata)
-
-add_custom_command(
-    OUTPUT ${BARECTF_GENERATED_FILES}
-    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_SOURCE_DIR}/tracing/app-trace/generated
-    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_SOURCE_DIR}/tracing/app-trace/generated/schema
-    COMMAND barectf generate
-        -m ${CMAKE_SOURCE_DIR}/tracing/app-trace/generated/schema
-        -c ${CMAKE_SOURCE_DIR}/tracing/app-trace/generated
-        -H ${CMAKE_SOURCE_DIR}/tracing/app-trace/generated
-        -I ${CMAKE_SOURCE_DIR}/tracing/app-trace/config
-        ${CMAKE_SOURCE_DIR}/tracing/app-trace/config/config.yaml
-    DEPENDS ${BARECTF_CONFIG_FILES}
-    COMMENT "Generating barectf files"
-    VERBATIM)
-
-add_custom_target(
-    barectf_generated_files
-    DEPENDS
-    ${BARECTF_GENERATED_FILES})
+# For debugging the macros
+#set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --save-temps")
 
 set(
     KERNEL_SOURCES
@@ -174,15 +152,6 @@ set(
     tracing/rtt/include)
 
 set(
-    APP_TRACE_SOURCES
-    tracing/app-trace/app_trace.c
-    tracing/barectf-platform-rtt/barectf_platform_rtt.c)
-
-set(
-    APP_TRACE_INCLUDES
-    tracing/app-trace/include)
-
-set(
     HAL_SOURCES
     ${stm32cubef4_SOURCE_DIR}/Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_cortex.c
     ${stm32cubef4_SOURCE_DIR}/Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_rcc.c
@@ -213,8 +182,10 @@ set(
     src/shell_cmds.c
     src/task_shell.c
     src/task_can1.c
-    src/task_can2.c
-    src/task_caneth.c
+    src/can2/task_can2.c
+    src/can2/tp.c
+    src/caneth/task_caneth.c
+    src/caneth/tp.c
     src/task_worker0.c
     src/task_worker1.c
     src/task_stats.c
@@ -317,43 +288,6 @@ target_link_libraries(
     hal
     freertos)
 
-add_library(
-    generated_barectf
-    tracing/app-trace/generated/barectf.c)
-target_include_directories(
-    generated_barectf
-    PUBLIC
-    tracing/app-trace/generated)
-target_compile_options(
-    generated_barectf
-    PRIVATE
-    -Wall -Wextra -Werror -Wpedantic
-    -Wshadow -Wmissing-include-dirs -Wstrict-prototypes
-    -Wno-sign-conversion -Wno-unused-function)
-add_dependencies(
-    generated_barectf
-    barectf_generated_files)
-
-add_library(
-    app_trace
-    STATIC
-    ${APP_TRACE_SOURCES})
-
-target_include_directories(
-    app_trace
-    PRIVATE
-    # For critical section impl
-    ${stm32cubef4_SOURCE_DIR}/Drivers/CMSIS/Include
-    ${stm32cubef4_SOURCE_DIR}/Drivers/CMSIS/Device/ST/STM32F4xx/Include/
-    PUBLIC
-    tracing/barectf-platform-rtt/include
-    ${APP_TRACE_INCLUDES})
-
-target_link_libraries(
-    app_trace
-    generated_barectf
-    rtt)
-
 add_executable(
     ${PROJECT_NAME}
     ${APP_SOURCES})
@@ -373,7 +307,10 @@ target_link_libraries(
     hal
     freertos
     freertos_tcpip
-    app_trace)
+    barectf_platform_rtt
+    system_trace
+    trace_schema
+    tracepoint)
 
 add_custom_target(
     openocd
@@ -416,6 +353,11 @@ add_custom_command(
     ./scripts/flash.sh
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     COMMENT "Flashing target")
+
+add_subdirectory(tracing/trace-schema)
+add_subdirectory(tracing/system-trace)
+add_subdirectory(tracing/barectf-platform-rtt)
+add_subdirectory(tracing/tracepoint)
 
 print_exec_size()
 elf_to_bin()

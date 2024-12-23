@@ -1,0 +1,7 @@
+native-byte-order: little-endian
+$features:
+  # Disable magic number and UUID
+  magic-field-type: false
+  uuid-field-type: false
+  # 8 bit stream ID
+  data-stream-type-id-field-type: uint8

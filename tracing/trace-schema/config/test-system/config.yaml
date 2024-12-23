@@ -1,0 +1,26 @@
+--- !<tag:barectf.org,2020/3/config>
+trace:
+  environment:
+    version_major: 0
+    version_minor: 1
+  type:
+    $include:
+      - stdint.yaml
+      - stdmisc.yaml
+      - lttng-ust-log-levels.yaml
+
+      # trace-type
+      #- common-platform.yaml
+      - test-system-platform.yaml
+
+      # field-type-aliases
+      #- common-types.yaml
+      #- test-system-types.yaml
+
+      # clock-types for each ECU/system
+      - test-system-clock.yaml
+
+      # data-stream-types for each component
+      - caneth-stream.yaml
+      - led-stream.yaml
+

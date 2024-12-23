@@ -1,5 +1,5 @@
-#ifndef TRACE_CONFIG_H
-#define TRACE_CONFIG_H
+#ifndef SYSTEM_TRACE_CONFIG_H
+#define SYSTEM_TRACE_CONFIG_H
 
 #include <stdint.h>
 
@@ -11,9 +11,10 @@ extern "C" {
 
 /* Must match the barectf default clock $c-type field */
 #define TRACE_CFG_CLOCK_C_TYPE uint32_t
+#define TRACE_CFG_CLOCK_TYPE dwt_clock
 
-#define TRACE_CFG_PACKET_SIZE (64)
-#define TRACE_CFG_RTT_UP_BUFFER_SIZE (1024 * 4)
+#define TRACE_CFG_RTT_UP_BUFFER_INDEX (2)
+#define TRACE_CFG_RTT_UP_BUFFER_SIZE (1024 * 1)
 
 #define TRACE_CFG_USE_TRACE_ASSERT (1)
 void vAssertCalled(const char* file, int line);
@@ -23,7 +24,6 @@ void vAssertCalled(const char* file, int line);
 #ifndef __CORTEX_M
 #define __CORTEX_M (4U)
 #endif
-#include <stdint.h>
 #include "cmsis_gcc.h"
 #define TRACE_CFG_USE_CRITICAL_SECTIONS (1)
 #define TRACE_CFG_ALLOC_CRITICAL_SECTION_NAME xTraceCriticalSectionStatus
@@ -35,4 +35,4 @@ void vAssertCalled(const char* file, int line);
 } /* extern "C" */
 #endif
 
-#endif /* TRACE_CONFIG_H */
+#endif /* SYSTEM_TRACE_CONFIG_H */

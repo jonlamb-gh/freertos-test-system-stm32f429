@@ -9,11 +9,11 @@
 #include "task_shell.h"
 #include "task_can1.h"
 #include "task_can2.h"
-#include "task_caneth.h"
+#include "caneth/task_caneth.h"
 #include "task_worker0.h"
 #include "task_worker1.h"
 #include "task_stats.h"
-#include "app_trace.h"
+#include "system_trace.h"
 
 #include "stm32f4xx_hal_conf.h"
 
@@ -45,15 +45,7 @@ int main(void)
     //tr = xTraceEnable(TRC_START_FROM_HOST);
     configASSERT(tr == TRC_SUCCESS);
 
-    app_trace_init();
-    TRACE(barectf_trace_startup(g_probe));
-    for(int i = 0; i < 150; i += 1)
-    {
-        TRACE(barectf_trace_blink(g_probe, (uint8_t) i));
-    }
-    TRACE(barectf_trace_log_info(g_probe, "Some message"));
-    TRACE(barectf_trace_shutdown(g_probe));
-    barectf_platform_rtt_fini();
+    system_trace_init();
 
     logging_init();
 

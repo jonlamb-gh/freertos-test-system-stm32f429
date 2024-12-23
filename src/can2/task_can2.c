@@ -6,6 +6,7 @@
 #include "status_flags.h"
 #include "can.h"
 #include "task_can2.h"
+#include "tp.h"
 
 #include "stm32f4xx_hal_conf.h"
 
@@ -27,6 +28,14 @@ static CAN_HandleTypeDef g_can = {0};
 void task_can2_start(void)
 {
     BaseType_t ret;
+
+    tracepoint_init();
+
+    tracepoint(trace_start);
+    tracepoint(blink);
+    tracepoint(blink);
+    tracepoint(blink);
+    tracepoint_flush();
 
     init_can2();
 

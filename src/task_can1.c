@@ -6,7 +6,7 @@
 #include "led.h"
 #include "status_flags.h"
 #include "can.h"
-#include "task_caneth.h"
+#include "caneth/task_caneth.h"
 #include "task_worker0.h"
 #include "task_worker1.h"
 #include "task_can1.h"

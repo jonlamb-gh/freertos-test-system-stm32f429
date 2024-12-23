@@ -1,0 +1,8 @@
+clock-types:
+  dwt_clock:
+    uuid: 79e49040-21b5-42d4-a873-677261696e65 # These should be unique across time domains
+    description: "ARM DWT 32-bit clcok"
+    $c-type: uint32_t
+    frequency: 180000000 # 180 MHz
+    precision: 1
+    origin-is-unix-epoch: false

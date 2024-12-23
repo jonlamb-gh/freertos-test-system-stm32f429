@@ -1,0 +1,16 @@
+$features:
+  packet:
+    # Disable packet begin/end timestamps
+    beginning-timestamp-field-type: false
+    end-timestamp-field-type: false
+    # 16 bit size fields
+    total-size-field-type: uint16
+    content-size-field-type: uint16
+    discarded-event-records-counter-snapshot-field-type: uint16
+    # 16 bit sequence number
+    sequence-number-field-type: uint16
+  event-record:
+    # 8 bit event IDs
+    type-id-field-type: uint8
+    # 32 bit timestamp
+    timestamp-field-type: uint32

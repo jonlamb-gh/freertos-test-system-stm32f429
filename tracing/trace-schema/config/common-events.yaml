@@ -1,0 +1,11 @@
+# Common events used in all systems/ECUs
+
+event-record-types:
+  trace_start: {}
+  # TODO add other log level variants, build a tracing wrapper for print-like utils
+  log_info:
+    log-level: INFO
+    payload-field-type:
+      class: structure
+      members:
+        - msg: string

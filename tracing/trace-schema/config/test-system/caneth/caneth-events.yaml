@@ -1,14 +1,12 @@
 event-record-types:
-  startup: {}
-  shutdown: {}
-  blink:
+  onearg:
     payload-field-type:
       class: structure
       members:
-        - cnt: uint8
-  log_info:
-    log-level: INFO
+        - one: uint8
+  twoarg:
     payload-field-type:
       class: structure
       members:
-        - msg: string
+        - one: uint8
+        - two: uint8

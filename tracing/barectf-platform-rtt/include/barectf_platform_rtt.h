@@ -4,49 +4,46 @@
 #include <stdint.h>
 
 /* User's configuration file */
-#include "trace_config.h"
+#include "system_trace_config.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-// TODO - need to redo this for things with args
+// TODO - need to redo this for things with args to prevent unused warnings
 #define TRACE_NOOP_STATEMENT do {} while( 0 )
 
 #if defined(TRACE_CFG_TRACING_ENABLED) && (TRACE_CFG_TRACING_ENABLED == 1)
 
-/* A macro to wrap calling the barectf generated tracing functions in a critical section if enabled.
- * Also useful for turning tracing calls into no-op statements based on TRACE_CFG_TRACING_ENABLED */
-#if defined(TRACE_CFG_USE_CRITICAL_SECTIONS)
-#define TRACE(barectf_trace_call) \
-    { \
-        TRACE_ALLOC_CRITICAL_SECTION(); \
-        TRACE_ENTER_CRITICAL_SECTION(); \
-        barectf_trace_call; \
-        TRACE_EXIT_CRITICAL_SECTION(); \
-    }
+#if defined(TRACE_CFG_USE_CSS)
+#if !defined(TRACE_CFG_ALLOC_CS) || !defined(TRACE_CFG_ENTER_CS) || !defined(TRACE_CFG_EXIT_CS)
+    #error "Missing critical section definition. Define TRACE_CFG_ALLOC_CS, TRACE_CFG_ENTER_CS, and TRACE_CFG_EXIT_CS in system_trace_config.h for your target."
 #else
-#define TRACE(barectf_trace_call) \
-    { \
-        barectf_trace_call; \
-    }
-#endif /* defined(TRACE_CFG_USE_CRITICAL_SECTIONS) */
+    #define TRACE_ALLOC_CS() TRACE_CFG_ALLOC_CS()
+    #define TRACE_ENTER_CS() TRACE_CFG_ENTER_CS()
+    #define TRACE_EXIT_CS() TRACE_CFG_EXIT_CS()
+#endif
+#else
+    #define TRACE_ALLOC_CS() TRACE_NOOP_STATEMENT
+    #define TRACE_ENTER_CS() TRACE_NOOP_STATEMENT
+    #define TRACE_EXIT_CS() TRACE_NOOP_STATEMENT
+#endif /* defined(TRACE_CFG_USE_CSS) */
 
 /* Defines the RTT buffer to use for writing the trace data */
 #if !defined(TRACE_CFG_RTT_UP_BUFFER_INDEX)
-#define TRACE_CFG_RTT_UP_BUFFER_INDEX (2)
-#endif
-
-#if !defined(TRACE_CFG_CLOCK_C_TYPE)
-#error "TRACE_CFG_CLOCK_C_TYPE must be defined to match the barectf default clock $c-type"
-#endif
-
-#if !defined(TRACE_CFG_PACKET_SIZE) || (TRACE_CFG_PACKET_SIZE <= 0)
-#error "TRACE_CFG_PACKET_SIZE must be defined and greater than zero"
+#error "TRACE_CFG_RTT_UP_BUFFER_INDEX must be defined in system_trace_config.h"
 #endif
 
 #if !defined(TRACE_CFG_RTT_UP_BUFFER_SIZE) || (TRACE_CFG_RTT_UP_BUFFER_SIZE <= TRACE_CFG_PACKET_SIZE)
 #error "TRACE_CFG_RTT_UP_BUFFER_SIZE must be defined and greater than TRACE_CFG_PACKET_SIZE"
+#endif
+
+#if !defined(TRACE_CFG_CLOCK_TYPE)
+#error "TRACE_CFG_CLOCK_TYPE must be defined manualy in system_trace_config.h"
+#endif
+
+#if !defined(TRACE_CFG_CLOCK_C_TYPE)
+#error "TRACE_CFG_CLOCK_C_TYPE must be defined manualy in system_trace_config.h"
 #endif
 
 #if defined(TRACE_CFG_USE_TRACE_ASSERT) && (TRACE_CFG_USE_TRACE_ASSERT != 0)
@@ -57,45 +54,52 @@ extern "C" {
 #define TRACE_ASSERT(eval) TRACE_NOOP_STATEMENT
 #endif /* defined(TRACE_CFG_USE_TRACE_ASSERT) && (TRACE_CFG_USE_TRACE_ASSERT != 0) */
 
+/* A low-level macro to wrap calling the barectf generated tracing functions in a critical section if enabled.
+ * Also useful for turning tracing calls into no-op statements based on TRACE_CFG_TRACING_ENABLED */
+#if defined(TRACE_CFG_USE_CSS)
+#define TRACE(barectf_trace_call) \
+    { \
+        TRACE_ALLOC_CS(); \
+        TRACE_ENTER_CS(); \
+        barectf_trace_call; \
+        TRACE_EXIT_CS(); \
+    }
+#else
+#define TRACE(barectf_trace_call) \
+    { \
+        barectf_trace_call; \
+    }
+#endif /* defined(TRACE_CFG_USE_CSS) */
+
+#if !defined(TRACE_CAT2)
+#define TRACE__CAT2(a, b) a##b
+#define TRACE_CAT2(a, b) TRACE__CAT2(a, b)
+#endif /* !defined(TRACE_CAT3) */
+
 #if !defined(TRACE_CAT3)
 #define TRACE__CAT3(a, b, c) a##b##c
 #define TRACE_CAT3(a, b, c) TRACE__CAT3(a, b, c)
 #endif /* !defined(TRACE_CAT3) */
 
-/* Use the 'default' stream type if TRACE_CFG_STREAM_TYPE is not specified */
-#if !defined(TRACE_CFG_STREAM_TYPE)
-#define TRACE_CFG_STREAM_TYPE default
-#endif
-typedef struct TRACE_CAT3(barectf_, TRACE_CFG_STREAM_TYPE, _ctx) barectf_stream_ctx;
+#if !defined(TRACE_CAT4)
+#define TRACE__CAT4(a, b, c, d) a##b##c##d
+#define TRACE_CAT4(a, b, c, d) TRACE__CAT4(a, b, c, d)
+#endif /* !defined(TRACE_CAT3) */
 
 /* User must implement this fn */
 extern TRACE_CFG_CLOCK_C_TYPE barectf_platform_rtt_get_clock(void);
 
-/* Must ensure the clock source is configured prior to calling. */
 void barectf_platform_rtt_init(void);
 
-void barectf_platform_rtt_fini(void);
+unsigned int barectf_platform_rtt_available_write_size(void);
 
-/* A wrapper to barectf_is_tracing_enabled */
-int barectf_platform_rtt_is_enabled(void);
-
-/* Write the currently open packet, if any, to the RTT channel buffer. */
-void barectf_platform_rtt_flush(void);
-
-barectf_stream_ctx* barectf_platform_rtt_ctx(void);
+void barectf_platform_rtt_write_packet(uint8_t* pkt, uint32_t pkt_size);
 
 #else /* defined(TRACE_CFG_TRACING_ENABLED) && (TRACE_CFG_TRACING_ENABLED == 1) */
 
-#if !defined(TRACE_CFG_PACKET_SIZE)
-#define TRACE_CFG_PACKET_SIZE (0)
-#endif
-
-typedef int barectf_stream_ctx;
 #define barectf_platform_rtt_init(x) TRACE_NOOP_STATEMENT
-#define barectf_platform_rtt_fini() TRACE_NOOP_STATEMENT
-#define barectf_platform_rtt_is_enabled() 0
-#define barectf_platform_rtt_flush() TRACE_NOOP_STATEMENT
-#define barectf_platform_rtt_ctx() (NULL)
+#define barectf_platform_rtt_available_write_size() TRACE_NOOP_STATEMENT
+#define barectf_platform_rtt_write_packet(x, y) TRACE_NOOP_STATEMENT
 
 #define TRACE(barectf_trace_call) TRACE_NOOP_STATEMENT
 

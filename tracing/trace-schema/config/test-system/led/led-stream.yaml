@@ -1,0 +1,10 @@
+data-stream-types:
+  led:
+    $is-default: false
+    $default-clock-type-name: dwt_clock
+    $include:
+      #- common-stream.yaml
+      - test-system-stream.yaml
+      - common-events.yaml
+      - test-system-events.yaml
+      - led-events.yaml

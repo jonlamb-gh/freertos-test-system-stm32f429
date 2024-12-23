@@ -1,0 +1,4 @@
+# Events that are common to all components within the system/ECU
+
+event-record-types:
+  test_system_todo: {}

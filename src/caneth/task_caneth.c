@@ -13,7 +13,8 @@
 #include "status_flags.h"
 #include "can.h"
 #include "caneth.h"
-#include "task_caneth.h"
+#include "caneth/task_caneth.h"
+#include "tp.h"
 
 #include "stm32f4xx_hal_conf.h"
 
@@ -38,6 +39,14 @@ static TimerHandle_t g_flush_timer = NULL;
 void task_caneth_start(void)
 {
     BaseType_t ret;
+
+    tracepoint_init();
+
+    tracepoint(trace_start);
+    tracepoint(onearg, 12);
+    tracepoint(twoarg, 10, 20);
+
+    tracepoint_flush();
 
     g_can_frame_queue = xQueueCreate(CAN_FRAME_QUEUE_LENGTH, sizeof(caneth_frame_s));
     configASSERT(g_can_frame_queue != NULL);
@@ -65,7 +74,7 @@ void task_caneth_start(void)
 void task_caneth_enqueue_rx_frame(const can_rx_frame_s *const frame)
 {
     BaseType_t ret;
-    
+
     if(FreeRTOS_IsNetworkUp() == pdTRUE)
     {
         caneth_frame_s qframe = {0};
