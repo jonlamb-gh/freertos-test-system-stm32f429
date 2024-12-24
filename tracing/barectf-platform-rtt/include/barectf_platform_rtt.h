@@ -15,7 +15,7 @@ extern "C" {
 
 #if defined(TRACE_CFG_TRACING_ENABLED) && (TRACE_CFG_TRACING_ENABLED == 1)
 
-#if defined(TRACE_CFG_USE_CSS)
+#if defined(TRACE_CFG_USE_CS)
 #if !defined(TRACE_CFG_ALLOC_CS) || !defined(TRACE_CFG_ENTER_CS) || !defined(TRACE_CFG_EXIT_CS)
     #error "Missing critical section definition. Define TRACE_CFG_ALLOC_CS, TRACE_CFG_ENTER_CS, and TRACE_CFG_EXIT_CS in system_trace_config.h for your target."
 #else
@@ -27,7 +27,7 @@ extern "C" {
     #define TRACE_ALLOC_CS() TRACE_NOOP_STATEMENT
     #define TRACE_ENTER_CS() TRACE_NOOP_STATEMENT
     #define TRACE_EXIT_CS() TRACE_NOOP_STATEMENT
-#endif /* defined(TRACE_CFG_USE_CSS) */
+#endif /* defined(TRACE_CFG_USE_CS) */
 
 /* Defines the RTT buffer to use for writing the trace data */
 #if !defined(TRACE_CFG_RTT_UP_BUFFER_INDEX)
@@ -56,7 +56,7 @@ extern "C" {
 
 /* A low-level macro to wrap calling the barectf generated tracing functions in a critical section if enabled.
  * Also useful for turning tracing calls into no-op statements based on TRACE_CFG_TRACING_ENABLED */
-#if defined(TRACE_CFG_USE_CSS)
+#if defined(TRACE_CFG_USE_CS)
 #define TRACE(barectf_trace_call) \
     { \
         TRACE_ALLOC_CS(); \
@@ -69,7 +69,7 @@ extern "C" {
     { \
         barectf_trace_call; \
     }
-#endif /* defined(TRACE_CFG_USE_CSS) */
+#endif /* defined(TRACE_CFG_USE_CS) */
 
 #if !defined(TRACE_CAT2)
 #define TRACE__CAT2(a, b) a##b

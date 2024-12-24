@@ -25,11 +25,11 @@ void vAssertCalled(const char* file, int line);
 #define __CORTEX_M (4U)
 #endif
 #include "cmsis_gcc.h"
-#define TRACE_CFG_USE_CRITICAL_SECTIONS (1)
-#define TRACE_CFG_ALLOC_CRITICAL_SECTION_NAME xTraceCriticalSectionStatus
-#define TRACE_CFG_ALLOC_CRITICAL_SECTION() uint32_t TRACE_CFG_ALLOC_CRITICAL_SECTION_NAME;
-#define TRACE_CFG_ENTER_CRITICAL_SECTION() {TRACE_CFG_ALLOC_CRITICAL_SECTION_NAME = __get_PRIMASK(); __set_PRIMASK(1);} /* PRIMASK disables ALL interrupts - allows for tracing in any ISR */
-#define TRACE_CFG_EXIT_CRITICAL_SECTION() {__set_PRIMASK(TRACE_CFG_ALLOC_CRITICAL_SECTION_NAME);}
+#define TRACE_CFG_USE_CS (1)
+#define TRACE_CFG_ALLOC_CS_NAME xTraceCriticalSectionStatus
+#define TRACE_CFG_ALLOC_CS() uint32_t TRACE_CFG_ALLOC_CS_NAME;
+#define TRACE_CFG_ENTER_CS() {TRACE_CFG_ALLOC_CS_NAME = __get_PRIMASK(); __set_PRIMASK(1);} /* PRIMASK disables ALL interrupts - allows for tracing in any ISR */
+#define TRACE_CFG_EXIT_CS() {__set_PRIMASK(TRACE_CFG_ALLOC_CS_NAME);}
 
 #ifdef __cplusplus
 } /* extern "C" */

@@ -10,6 +10,7 @@
 #define TRACE_CFG_PACKET_SIZE (64)
 // just using led for now
 #define TRACEPOINT_COMPONENT led
+//#define TRACE_CFG_ENABLE_FROM_ISR (1)
 
 #include "tracepoint.h"
 

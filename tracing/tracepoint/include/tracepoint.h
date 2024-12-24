@@ -1,9 +1,6 @@
 // TODO
 // NOTE: do not include this in header files
 
-// TODO need to refactor the critical section stuff
-// only around RTT buffer copy, unless "from-isr" config is enabled
-
 #ifndef TRACEPOINT_H
 #define TRACEPOINT_H
 
@@ -34,12 +31,22 @@
 extern "C" {
 #endif
 
-// TODO no-op variants
-// support component-local version of TRACE_CFG_TRACING_ENABLED
-// #define TRACE_CFG_TRACEPOINT_ENABLED TRACE_CFG_TRACING_ENABLED default
+/* TODO docs */
+#if !defined(TRACE_CFG_TRACEPOINT_ENABLED)
+#define TRACE_CFG_TRACEPOINT_ENABLED TRACE_CFG_TRACING_ENABLED
+#endif
+
+#if defined(TRACE_CFG_TRACEPOINT_ENABLED) && (TRACE_CFG_TRACEPOINT_ENABLED != 0)
 
 /* TODO docs */
 #define TRACE_CFG_STREAM_TYPE TRACEPOINT_COMPONENT
+
+/* TODO docs */
+#if defined(TRACE_CFG_ENABLE_FROM_ISR) && (TRACE_CFG_ENABLE_FROM_ISR != 0)
+#if !defined(TRACE_CFG_USE_CS) || (TRACE_CFG_USE_CS == 0)
+#error "TRACE_CFG_ENABLE_FROM_ISR requires config TRACE_CFG_USE_CS to be enabled"
+#endif
+#endif /* defined(TRACE_CFG_ENABLE_FROM_ISR) */
 
 /* TODO docs */
 // TODO make TRACE_CFG_PACKET_CONTEXT_FIELD a fn-like macro ? FreeRTOS has pxCurrentTCB data...
@@ -96,8 +103,18 @@ void TRACE_CAT2(tracepoint_enable_, TRACE_CFG_STREAM_TYPE)(int enable);
             _TRACE_ARGS(n, args))
 
 /* tracepoint with variadic support for up to 12 arguments */
+#if defined(TRACE_CFG_ENABLE_FROM_ISR)
+#define tracepoint(event, ...) \
+    { \
+        TRACE_ALLOC_CS(); \
+        TRACE_ENTER_CS(); \
+        _TRACEPOINT(event, _TRACE_NARG(0, ##__VA_ARGS__), (__VA_ARGS__)); \
+        TRACE_EXIT_CS(); \
+    }
+#else
 #define tracepoint(event, ...) \
     _TRACEPOINT(event, _TRACE_NARG(0, ##__VA_ARGS__), (__VA_ARGS__))
+#endif /* defined(TRACE_CFG_ENABLE_FROM_ISR) */
 
 /*
  * Create the definitions for the component probe and init functions.
@@ -142,15 +159,20 @@ static void open_packet(void* data)
 
 static void close_packet(void* data)
 {
+    TRACE_ALLOC_CS();
     (void) data;
 
     /* Write the CTF packet data to the pkt */
     bctf_close_packet(probe());
 
+    TRACE_ENTER_CS();
+
     /* Write it out */
     barectf_platform_rtt_write_packet(
             barectf_packet_buf(probe()),
             TRACE_CFG_PACKET_SIZE);
+
+    TRACE_EXIT_CS();
 }
 
 static void flush_or_close(int is_flush)
@@ -171,6 +193,12 @@ static void flush_or_close(int is_flush)
             {
                 open_packet(NULL);
             }
+        }
+
+        /* Disable tracing if closing */
+        if(is_flush == 0)
+        {
+            barectf_enable_tracing(probe(), 0);
         }
 
         TRACE_EXIT_CS();
@@ -204,7 +232,6 @@ void TRACE_CAT2(tracepoint_init_, TRACE_CFG_STREAM_TYPE)(void)
 void TRACE_CAT2(tracepoint_fini_, TRACE_CFG_STREAM_TYPE)(void)
 {
     flush_or_close(0 /* is_flush */);
-    barectf_enable_tracing(probe(), 0);
 }
 
 void TRACE_CAT2(tracepoint_flush_, TRACE_CFG_STREAM_TYPE)(void)
@@ -219,15 +246,34 @@ int TRACE_CAT2(tracepoint_is_enabled_, TRACE_CFG_STREAM_TYPE)(void)
 
 void TRACE_CAT2(tracepoint_enable_, TRACE_CFG_STREAM_TYPE)(int enable)
 {
+    TRACE_ALLOC_CS();
+    TRACE_ENTER_CS();
+
     barectf_enable_tracing(probe(), enable);
+
+    TRACE_EXIT_CS();
 }
-#endif /* TRACEPOINT_CREATE_PROBE */
+#endif /* defined(TRACEPOINT_CREATE_PROBE) */
 
+#else /* defined(TRACE_CFG_TRACEPOINT_ENABLED) && (TRACE_CFG_TRACEPOINT_ENABLED != 0) */
 
-// no-op stuff TODO
-//#if !defined(TRACE_CFG_PACKET_SIZE)
-//#define TRACE_CFG_PACKET_SIZE (0)
-//#endif
+#if !defined(TRACE_CFG_PACKET_SIZE)
+#define TRACE_CFG_PACKET_SIZE (0)
+#endif
+
+#define tracepoint_init() TRACE_NOOP_STATEMENT
+#define tracepoint_fini() TRACE_NOOP_STATEMENT
+#define tracepoint_flush() TRACE_NOOP_STATEMENT
+#define tracepoint_is_enabled() (0)
+#define tracepoint_enable(x) TRACE_NOOP_STATEMENT
+#define tracepoint(event, ...) TRACE_NOOP_STATEMENT
+
+#if defined(TRACEPOINT_CREATE_PROBE)
+/* Prevent diagnostic warning about empty translation unit when tracing is disabled */
+typedef int make_the_compiler_happy;
+#endif /* defined(TRACEPOINT_CREATE_PROBE) */
+
+#endif /* defined(TRACE_CFG_TRACEPOINT_ENABLED) && (TRACE_CFG_TRACEPOINT_ENABLED != 0) */
 
 #ifdef __cplusplus
 } /* extern "C" */

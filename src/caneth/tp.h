@@ -9,6 +9,7 @@
 #define TRACE_CFG_TRACEPOINT_ENABLED (1)
 #define TRACE_CFG_PACKET_SIZE (64)
 #define TRACEPOINT_COMPONENT caneth
+//#define TRACE_CFG_ENABLE_FROM_ISR (1)
 
 #include "tracepoint.h"
 
